@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dispo VSAV week-end</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2330; --muted:#6b7280; --line:#e3e6ea;
+    --red-b:#e24b4a; --red-bg:#fceaea; --red-t:#a32d2d;
+    --amb-b:#ef9f27; --amb-bg:#faeeda; --amb-t:#854f0b;
+    --grn-b:#1d9e75; --grn-bg:#e1f5ee; --grn-t:#0f6e56;
+    --accent:#185fa5; --accent-bg:#e6f1fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.5; padding:16px; max-width:760px; margin:0 auto;}
+  h1{font-size:20px; font-weight:600; margin:4px 0 2px;}
+  .sub{font-size:13px; color:var(--muted); margin:0 0 16px;}
+  .bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  input[type=text],input[type=date],input[type=password]{
+    height:38px; padding:0 12px; border:1px solid var(--line); border-radius:8px;
+    font-size:15px; background:#fff; color:var(--ink); outline:none;}
+  input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg);}
+  button{height:38px; padding:0 14px; border:1px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--ink); font-size:14px; cursor:pointer;}
+  button:hover{background:var(--bg);}
+  button:active{transform:scale(.98);}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; margin:4px 0 18px;}
+  .legend span{display:flex; align-items:center; gap:5px;}
+  .dot{width:11px; height:11px; border-radius:3px; display:inline-block;}
+  .day{margin-bottom:22px;}
+  .day h2{font-size:16px; font-weight:600; margin:0 0 8px;}
+  .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;}
+  .slot{border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff;}
+  .slot .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .slot .lbl{font-size:13px; font-weight:600;}
+  .slot .badge{font-size:11px; font-weight:600;}
+  .slot .person{font-size:12px; color:var(--muted); line-height:1.5;}
+  .slot .empty{font-size:12px; color:#9aa1ab;}
+  .roles{display:flex; gap:4px; margin-top:8px; flex-wrap:wrap;}
+  .roles button{height:auto; font-size:11px; padding:3px 8px; border-radius:6px; color:var(--muted);}
+  .roles button.on{border-color:var(--accent); background:var(--accent-bg); color:var(--accent);}
+  .admin{margin-top:8px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:#fff;}
+  .admin .arow{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;}
+  .note{font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:16px;}
+  .warn{background:#fff8e6; border:1px solid #f2d98a; color:#7a5a10; padding:10px 12px;
+    border-radius:10px; font-size:13px; margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<h1>Disponibilités VSAV — week-end</h1>
+<p class="sub" id="dateline">Renseigne les dates du week-end.</p>
+
+<div id="fbwarn" class="warn" style="display:none;">
+  ⚠️ Firebase n'est pas encore configuré : les réponses ne sont pas partagées.
+  Ouvre le fichier et remplis le bloc de config Firebase (voir le commentaire en haut du script).
+</div>
+
+<div class="bar">
+  <input type="text" id="name" placeholder="Ton nom" style="flex:1; min-width:160px;" />
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--red-b)"></span>Ne part pas</span>
+  <span><span class="dot" style="background:var(--amb-b)"></span>Décale à 2</span>
+  <span><span class="dot" style="background:var(--grn-b)"></span>Complet</span>
+</div>
+
+<div id="grid"></div>
+
+<div class="admin">
+  <div style="font-size:13px; font-weight:600;">Réservé chef de centre</div>
+  <div class="arow">
+    <input type="password" id="pw" placeholder="Mot de passe" style="width:150px;" />
+    <input type="date" id="satdate" />
+    <button id="setdate">Enregistrer les dates</button>
+    <button id="clear">Vider le tableau</button>
+  </div>
+  <div style="font-size:12px; color:var(--muted); margin-top:6px;">
+    Le dimanche est calculé automatiquement à partir du samedi.
+  </div>
+</div>
+
+<p class="note">
+  Chaque pompier tape son nom puis clique son rôle sur chaque créneau.
+  Le VSAV décale dès qu'il y a de quoi conduire (conducteur ou chef d'agrès) + un équipier.
+  Il est complet quand les trois rôles sont présents : équipier, conducteur et chef d'agrès.
+</p>
+
+<!-- ============================================================
+     CONFIG FIREBASE — À REMPLIR
+     1. Va sur https://console.firebase.google.com → crée un projet
+     2. Ajoute une "Web App", copie l'objet firebaseConfig
+     3. Active "Realtime Database" (mode test pour commencer)
+     4. Colle tes valeurs ci-dessous à la place des "..."
+     5. Change aussi ADMIN_PASSWORD juste en dessous
+     ============================================================ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    databaseURL: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+  };
+
+  const ADMIN_PASSWORD = "caserne45";   // <-- change-le
+
+  // ---------------------------------------------------------
+  const days = [{id:'sam',label:'Samedi'},{id:'dim',label:'Dimanche'}];
+  const slots = [
+    {id:'matin',label:'Matin'},
+    {id:'aprem',label:'Après-midi'},
+    {id:'soir', label:'Soirée + nuit'},
+    {id:'j24',  label:'24 h'}
+  ];
+  const roles = [
+    {id:'cond',label:'Conducteur',short:'conducteur'},
+    {id:'chef',label:'Chef d\u2019agrès',short:'chef agrès'},
+    {id:'equi',label:'Équipier',short:'équipier'}
+  ];
+
+  let db=null, live=false;
+  let state = { dispo:{}, satdate:"" };
+
+  const configured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "...";
+  if(configured){
+    try{
+      const app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+      live = true;
+      onValue(ref(db,'garde'), snap=>{
+        const v = snap.val() || {};
+        state.dispo = v.dispo || {};
+        state.satdate = v.satdate || "";
+        render();
+      });
+    }catch(e){ live=false; }
+  }
+  if(!live){ document.getElementById('fbwarn').style.display='block'; }
+
+  function push(){
+    if(live){ set(ref(db,'garde'), state); }
+    render();
+  }
+
+  function sk(d,s){ return d+'_'+s; }
+
+  function entries(d,s){
+    const k=sk(d,s), out=[];
+    Object.keys(state.dispo).forEach(n=>{
+      if(state.dispo[n] && state.dispo[n][k]) out.push({name:n, role:state.dispo[n][k]});
+    });
+    out.sort((a,b)=>a.name.localeCompare(b.name));
+    return out;
+  }
+
+  function status(list){
+    const nC=list.filter(p=>p.role==='cond').length;
+    const nH=list.filter(p=>p.role==='chef').length;
+    const nE=list.filter(p=>p.role==='equi').length;
+    const total=list.length;
+    const canDrive=(nC+nH)>=1;
+    if(nE>=1 && nC>=1 && nH>=1) return 'green';
+    if(canDrive && total>=2 && nE>=1) return 'amber';
+    if(canDrive && total>=2 && (nC+nH)>=2) return 'amber';
+    return 'red';
+  }
+
+  function fmt(dstr){
+    if(!dstr) return "";
+    const d=new Date(dstr+'T00:00:00');
+    return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  }
+  function nextDay(dstr){
+    if(!dstr) return "";
+    const d=new Date(dstr+'T00:00:00'); d.setDate(d.getDate()+1);
+    return d.toISOString().slice(0,10);
+  }
+
+  function needName(){
+    const inp=document.getElementById('name');
+    if(inp.value.trim()) return inp.value.trim();
+    inp.style.boxShadow='0 0 0 3px var(--red-bg)';
+    inp.style.borderColor='var(--red-b)';
+    inp.placeholder='Écris ton nom d\u2019abord';
+    setTimeout(()=>{inp.style.boxShadow='';inp.style.borderColor='';},1500);
+    return null;
+  }
+
+  function setRole(d,s,role){
+    const name=needName(); if(!name) return;
+    if(!state.dispo[name]) state.dispo[name]={};
+    const k=sk(d,s);
+    if(state.dispo[name][k]===role) delete state.dispo[name][k];
+    else state.dispo[name][k]=role;
+    push();
+  }
+
+  window._render = render;
+  function render(){
+    const name=(document.getElementById('name').value||'').trim();
+
+    const sat=state.satdate;
+    const dl=document.getElementById('dateline');
+    if(sat){ dl.textContent='Samedi '+fmt(sat)+' — Dimanche '+fmt(nextDay(sat)); }
+    else { dl.textContent='Dates du week-end non renseignées.'; }
+
+    const C={
+      red:{b:'var(--red-b)',bg:'var(--red-bg)',t:'var(--red-t)',l:'Ne part pas'},
+      amber:{b:'var(--amb-b)',bg:'var(--amb-bg)',t:'var(--amb-t)',l:'Décale à 2'},
+      green:{b:'var(--grn-b)',bg:'var(--grn-bg)',t:'var(--grn-t)',l:'Complet'}
+    };
+
+    const grid=document.getElementById('grid');
+    grid.innerHTML='';
+    days.forEach(day=>{
+      const wrap=document.createElement('div'); wrap.className='day';
+      const h=document.createElement('h2');
+      const dd = day.id==='sam'?sat:nextDay(sat);
+      h.textContent = day.label + (dd? ' '+fmt(dd):'');
+      wrap.appendChild(h);
+      const row=document.createElement('div'); row.className='row';
+      slots.forEach(slot=>{
+        const list=entries(day.id,slot.id);
+        const st=status(list); const c=C[st];
+        const mine = name && state.dispo[name] ? state.dispo[name][sk(day.id,slot.id)] : null;
+
+        const card=document.createElement('div'); card.className='slot';
+        card.style.borderColor=c.b; card.style.background=c.bg;
+
+        const top=document.createElement('div'); top.className='top';
+        const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent=slot.label; lbl.style.color=c.t;
+        const bdg=document.createElement('span'); bdg.className='badge'; bdg.textContent=c.l; bdg.style.color=c.t;
+        top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
+
+        if(list.length){
+          list.forEach(p=>{
+            const line=document.createElement('div'); line.className='person';
+            const rs=(roles.find(r=>r.id===p.role)||{}).short||'';
+            line.textContent=p.name+' · '+rs; card.appendChild(line);
+          });
+        } else {
+          const e=document.createElement('div'); e.className='empty'; e.textContent='—'; card.appendChild(e);
+        }
+
+        const rb=document.createElement('div'); rb.className='roles';
+        roles.forEach(r=>{
+          const b=document.createElement('button');
+          b.textContent=r.label;
+          if(mine===r.id) b.className='on';
+          b.onclick=()=>setRole(day.id,slot.id,r.id);
+          rb.appendChild(b);
+        });
+        card.appendChild(rb);
+        row.appendChild(card);
+      });
+      wrap.appendChild(row);
+      grid.appendChild(wrap);
+    });
+  }
+
+  document.getElementById('name').addEventListener('input',render);
+
+  document.getElementById('setdate').onclick=()=>{
+    if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
+    const d=document.getElementById('satdate').value;
+    if(!d){ alert('Choisis la date du samedi'); return; }
+    state.satdate=d; push();
+  };
+  document.getElementById('clear').onclick=()=>{
+    if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
+    if(!confirm('Vider toutes les réponses ?')) return;
+    state.dispo={};
+    if(live) push(); else render();
+  };
+
+  render();
+</script>
+</body>
+</html>

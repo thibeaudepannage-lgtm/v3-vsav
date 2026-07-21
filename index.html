@@ -144,10 +144,16 @@
   function sk(d,s){ return d+'_'+s; }
 
   function entries(d,s){
-    const k=sk(d,s), out=[];
+    // Une personne en "24h" ce jour couvre aussi matin, aprem et soir du même jour.
+    const k=sk(d,s);
+    const k24=sk(d,'j24');
+    const byName={};
     Object.keys(state.dispo).forEach(n=>{
-      if(state.dispo[n] && state.dispo[n][k]) out.push({name:n, role:state.dispo[n][k]});
+      const u=state.dispo[n]; if(!u) return;
+      if(u[k]){ byName[n]={role:u[k], via24:false}; }
+      else if(s!=='j24' && u[k24]){ byName[n]={role:u[k24], via24:true}; }
     });
+    const out=Object.keys(byName).map(n=>({name:n, role:byName[n].role, via24:byName[n].via24}));
     out.sort((a,b)=>a.name.localeCompare(b.name));
     return out;
   }
@@ -248,7 +254,7 @@
           list.forEach(p=>{
             const line=document.createElement('div'); line.className='person';
             const rs=(roles.find(r=>r.id===p.role)||{}).short||'';
-            line.textContent=p.name+' · '+rs; card.appendChild(line);
+            line.textContent=p.name+' · '+rs+(p.via24?' (24h)':''); card.appendChild(line);
           });
         } else {
           const e=document.createElement('div'); e.className='empty'; e.textContent='—'; card.appendChild(e);

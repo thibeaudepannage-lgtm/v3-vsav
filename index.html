@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dispo VSAV week-end</title>
+<title>Dispo VSAV — week-ends du mois</title>
 <style>
   :root{
     --bg:#f6f7f9; --card:#ffffff; --ink:#1c2330; --muted:#6b7280; --line:#e3e6ea;
@@ -19,7 +19,7 @@
   h1{font-size:20px; font-weight:600; margin:4px 0 2px;}
   .sub{font-size:13px; color:var(--muted); margin:0 0 16px;}
   .bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
-  input[type=text],input[type=date],input[type=password]{
+  input[type=text],input[type=month],input[type=password]{
     height:38px; padding:0 12px; border:1px solid var(--line); border-radius:8px;
     font-size:15px; background:#fff; color:var(--ink); outline:none;}
   input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg);}
@@ -30,13 +30,24 @@
   .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; margin:4px 0 18px;}
   .legend span{display:flex; align-items:center; gap:5px;}
   .dot{width:11px; height:11px; border-radius:3px; display:inline-block;}
-  .day{margin-bottom:22px;}
-  .day h2{font-size:16px; font-weight:600; margin:0 0 8px;}
+  .we{border:1px solid var(--line); border-radius:14px; background:#fff; margin-bottom:12px; overflow:hidden;}
+  .we-head{display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:12px 14px; cursor:pointer; user-select:none;}
+  .we-head:hover{background:var(--bg);}
+  .we-title{font-size:15px; font-weight:600;}
+  .we-sum{display:flex; gap:5px; align-items:center; flex-wrap:wrap;}
+  .pill{font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px;}
+  .chev{color:var(--muted); font-size:13px; transition:transform .15s;}
+  .we.open .chev{transform:rotate(90deg);}
+  .we-body{display:none; padding:0 14px 14px;}
+  .we.open .we-body{display:block;}
+  .day{margin-top:12px;}
+  .day h3{font-size:14px; font-weight:600; margin:0 0 8px; color:var(--ink);}
   .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;}
   .slot{border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff;}
   .slot .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
-  .slot .lbl{font-size:13px; font-weight:600;}
-  .slot .badge{font-size:11px; font-weight:600;}
+  .slot .lbl{font-size:12.5px; font-weight:600;}
+  .slot .badge{font-size:11px; font-weight:600; white-space:nowrap;}
   .slot .person{font-size:12px; color:var(--muted); line-height:1.5;}
   .slot .empty{font-size:12px; color:#9aa1ab;}
   .roles{display:flex; gap:4px; margin-top:8px; flex-wrap:wrap;}
@@ -51,8 +62,8 @@
 </head>
 <body>
 
-<h1>Disponibilités VSAV — week-end</h1>
-<p class="sub" id="dateline">Renseigne la date du week-end.</p>
+<h1>Disponibilités VSAV — week-ends du mois</h1>
+<p class="sub" id="monthline">Renseigne le mois.</p>
 
 <div id="fbwarn" class="warn" style="display:none;">
   ⚠️ Connexion à la base non établie : les réponses ne sont pas partagées. Vérifie la config Firebase.
@@ -68,25 +79,26 @@
   <span><span class="dot" style="background:var(--grn-b)"></span>Complet</span>
 </div>
 
-<div id="grid"></div>
+<div id="list"></div>
 
 <div class="admin">
   <div style="font-size:13px; font-weight:600;">Réservé chef de centre</div>
   <div class="arow">
-    <input type="password" id="pw" placeholder="Mot de passe" style="width:150px;" />
-    <input type="date" id="satdate" />
-    <button id="setdate">Enregistrer la date</button>
+    <input type="password" id="pw" placeholder="Mot de passe" style="width:140px;" />
+    <input type="month" id="monthpick" />
+    <button id="setmonth">Choisir le mois</button>
     <button id="clear">Vider le tableau</button>
   </div>
   <div style="font-size:12px; color:var(--muted); margin-top:6px;">
-    Choisis la date du <b>samedi</b> : le dimanche est calculé automatiquement.
+    Choisis le mois : tous les samedis et dimanches sont générés automatiquement.
   </div>
 </div>
 
 <p class="note">
-  Chaque pompier tape son nom puis clique son rôle sur chaque créneau.
+  Chaque pompier tape son nom, ouvre un week-end et clique son rôle sur les créneaux.
   Le VSAV décale dès qu'il y a de quoi conduire (conducteur ou chef d'agrès) + un équipier.
-  Il est complet quand les trois rôles sont présents : équipier, conducteur et chef d'agrès.
+  Il est complet avec les trois rôles : équipier, conducteur et chef d'agrès.
+  Cocher « 24 h » compte aussi pour le matin, l'après-midi et la soirée du même jour.
 </p>
 
 <script type="module">
@@ -108,11 +120,10 @@
   const ADMIN_PASSWORD = "caserne45";   // <-- change-le si tu veux
   // ======================================
 
-  const days = [{id:'sam',label:'Samedi'},{id:'dim',label:'Dimanche'}];
   const slots = [
-    {id:'matin',label:'Matin'},
-    {id:'aprem',label:'Après-midi'},
-    {id:'soir', label:'Soirée + nuit'},
+    {id:'matin',label:'Matin · 7h-14h'},
+    {id:'aprem',label:'Après-midi · 14h-21h'},
+    {id:'soir', label:'Soirée + nuit · 21h-7h'},
     {id:'j24',  label:'24 h'}
   ];
   const roles = [
@@ -122,76 +133,88 @@
   ];
 
   let db=null, live=false;
-  let state = { dispo:{}, satdate:"" };
+  // state.month="2026-08" ; state.dispo[dateISO][name]={slotId:role} ; state.materiel[dateISO][name]=true
+  let state = { month:"", dispo:{}, materiel:{} };
+  let openWE = {}; // quels week-ends sont ouverts (local, non partagé)
+  const MATERIEL_MIN = 2;
 
   try{
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
     live = true;
-    onValue(ref(db,'garde'), snap=>{
+    onValue(ref(db,'garde_mois'), snap=>{
       const v = snap.val() || {};
+      state.month = v.month || "";
       state.dispo = v.dispo || {};
-      state.satdate = v.satdate || "";
+      state.materiel = v.materiel || {};
       render();
     }, err=>{ live=false; document.getElementById('fbwarn').style.display='block'; });
   }catch(e){ live=false; document.getElementById('fbwarn').style.display='block'; }
 
   function push(){
-    if(live){ set(ref(db,'garde'), state).catch(()=>{}); }
+    if(live){ set(ref(db,'garde_mois'), {month:state.month, dispo:state.dispo, materiel:state.materiel}).catch(()=>{}); }
     render();
   }
 
-  function sk(d,s){ return d+'_'+s; }
+  // ---- Dates ----
+  function parseYMD(str){ const p=str.split('-').map(Number); return {y:p[0],m:p[1],d:p[2]}; }
+  function iso(y,m,d){ return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+  function fmtLong(str){
+    const {y,m,d}=parseYMD(str);
+    const dt=new Date(Date.UTC(y,m-1,d));
+    return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  }
+  function fmtShort(str){
+    const {y,m,d}=parseYMD(str);
+    const dt=new Date(Date.UTC(y,m-1,d));
+    return dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',timeZone:'UTC'});
+  }
+  // renvoie la liste des week-ends du mois : [{sat:iso, sun:iso}]
+  function weekendsOfMonth(month){
+    if(!month) return [];
+    const [y,m]=month.split('-').map(Number);
+    const res=[]; const daysIn=new Date(Date.UTC(y,m,0)).getUTCDate();
+    for(let d=1; d<=daysIn; d++){
+      const dt=new Date(Date.UTC(y,m-1,d));
+      const wd=dt.getUTCDay(); // 0=dim, 6=sam
+      if(wd===6){ // samedi
+        const sat=iso(y,m,d);
+        // dimanche = lendemain (peut basculer sur mois suivant)
+        const sd=new Date(Date.UTC(y,m-1,d)); sd.setUTCDate(sd.getUTCDate()+1);
+        const sun=iso(sd.getUTCFullYear(), sd.getUTCMonth()+1, sd.getUTCDate());
+        res.push({sat, sun});
+      } else if(wd===0 && d===1){
+        // dimanche 1er du mois sans samedi avant -> week-end orphelin
+        res.push({sat:null, sun:iso(y,m,d)});
+      }
+    }
+    return res;
+  }
 
-  function entries(d,s){
-    // Une personne en "24h" ce jour couvre aussi matin, aprem et soir du même jour.
-    const k=sk(d,s);
-    const k24=sk(d,'j24');
+  function sk(s){ return s; }
+
+  // entries pour une date + un créneau (avec règle 24h)
+  function entries(dateISO, slotId){
+    const day = state.dispo[dateISO] || {};
     const byName={};
-    Object.keys(state.dispo).forEach(n=>{
-      const u=state.dispo[n]; if(!u) return;
-      if(u[k]){ byName[n]={role:u[k], via24:false}; }
-      else if(s!=='j24' && u[k24]){ byName[n]={role:u[k24], via24:true}; }
+    Object.keys(day).forEach(n=>{
+      const u=day[n]; if(!u) return;
+      if(u[slotId]){ byName[n]={role:u[slotId],via24:false}; }
+      else if(slotId!=='j24' && u['j24']){ byName[n]={role:u['j24'],via24:true}; }
     });
-    const out=Object.keys(byName).map(n=>({name:n, role:byName[n].role, via24:byName[n].via24}));
-    out.sort((a,b)=>a.name.localeCompare(b.name));
-    return out;
+    return Object.keys(byName).map(n=>({name:n,role:byName[n].role,via24:byName[n].via24}))
+      .sort((a,b)=>a.name.localeCompare(b.name));
   }
 
   function status(list){
     const nC=list.filter(p=>p.role==='cond').length;
     const nH=list.filter(p=>p.role==='chef').length;
     const nE=list.filter(p=>p.role==='equi').length;
-    const total=list.length;
-    const canDrive=(nC+nH)>=1;
+    const total=list.length, canDrive=(nC+nH)>=1;
     if(nE>=1 && nC>=1 && nH>=1) return 'green';
     if(canDrive && total>=2 && nE>=1) return 'amber';
     if(canDrive && total>=2 && (nC+nH)>=2) return 'amber';
     return 'red';
-  }
-
-  // ---- DATES : calcul robuste, sans décalage de fuseau ----
-  function parseYMD(str){
-    // str = "2026-07-18" -> [2026,7,18]
-    const p = str.split('-').map(Number);
-    return {y:p[0], m:p[1], d:p[2]};
-  }
-  function nextDayYMD(str){
-    if(!str) return "";
-    const {y,m,d} = parseYMD(str);
-    // Date en UTC pour éviter tout décalage, +1 jour
-    const dt = new Date(Date.UTC(y, m-1, d));
-    dt.setUTCDate(dt.getUTCDate()+1);
-    const yy = dt.getUTCFullYear();
-    const mm = String(dt.getUTCMonth()+1).padStart(2,'0');
-    const dd = String(dt.getUTCDate()).padStart(2,'0');
-    return yy+'-'+mm+'-'+dd;
-  }
-  function fmt(str){
-    if(!str) return "";
-    const {y,m,d} = parseYMD(str);
-    const dt = new Date(Date.UTC(y, m-1, d));
-    return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
   }
 
   function needName(){
@@ -204,89 +227,190 @@
     return null;
   }
 
-  function setRole(d,s,role){
+  function setRole(dateISO, slotId, role){
     const name=needName(); if(!name) return;
-    if(!state.dispo[name]) state.dispo[name]={};
-    const k=sk(d,s);
-    if(state.dispo[name][k]===role) delete state.dispo[name][k];
-    else state.dispo[name][k]=role;
+    if(!state.dispo[dateISO]) state.dispo[dateISO]={};
+    if(!state.dispo[dateISO][name]) state.dispo[dateISO][name]={};
+    const cur=state.dispo[dateISO][name];
+    if(cur[slotId]===role) delete cur[slotId];
+    else cur[slotId]=role;
+    if(Object.keys(cur).length===0) delete state.dispo[dateISO][name];
+    if(Object.keys(state.dispo[dateISO]).length===0) delete state.dispo[dateISO];
     push();
   }
 
-  function render(){
+  const C={
+    red:{b:'var(--red-b)',bg:'var(--red-bg)',t:'var(--red-t)',l:'Ne part pas'},
+    amber:{b:'var(--amb-b)',bg:'var(--amb-bg)',t:'var(--amb-t)',l:'Décale à 2'},
+    green:{b:'var(--grn-b)',bg:'var(--grn-bg)',t:'var(--grn-t)',l:'Complet'}
+  };
+
+  function daySummary(dateISO){
+    // couleur "pire cas" des 3 vraies plages (matin/aprem/soir)
+    const order={red:0,amber:1,green:2};
+    let worst='green';
+    ['matin','aprem','soir'].forEach(s=>{
+      const st=status(entries(dateISO,s));
+      if(order[st]<order[worst]) worst=st;
+    });
+    return worst;
+  }
+
+  // ---- Présence vérification matériel (samedis) ----
+  function materielList(dateISO){
+    const day=state.materiel[dateISO]||{};
+    return Object.keys(day).filter(n=>day[n]).sort((a,b)=>a.localeCompare(b));
+  }
+  function toggleMateriel(dateISO){
+    const name=needName(); if(!name) return;
+    if(!state.materiel[dateISO]) state.materiel[dateISO]={};
+    if(state.materiel[dateISO][name]) delete state.materiel[dateISO][name];
+    else state.materiel[dateISO][name]=true;
+    if(Object.keys(state.materiel[dateISO]).length===0) delete state.materiel[dateISO];
+    push();
+  }
+  function isSaturday(dateISO){
+    const {y,m,d}=parseYMD(dateISO);
+    return new Date(Date.UTC(y,m-1,d)).getUTCDay()===6;
+  }
+  function buildMateriel(dateISO){
     const name=(document.getElementById('name').value||'').trim();
-    const sat=state.satdate;
-    const sun=nextDayYMD(sat);
+    const present=materielList(dateISO);
+    const ok=present.length>=MATERIEL_MIN;
+    const c=ok?C.green:C.red;
+    const mine = name && state.materiel[dateISO] && state.materiel[dateISO][name];
 
-    const dl=document.getElementById('dateline');
-    if(sat){ dl.textContent='Samedi '+fmt(sat)+' — Dimanche '+fmt(sun); }
-    else { dl.textContent='Date du week-end non renseignée.'; }
+    const card=document.createElement('div'); card.className='slot';
+    card.style.borderColor=c.b; card.style.background=c.bg; card.style.marginTop='4px';
 
-    const C={
-      red:{b:'var(--red-b)',bg:'var(--red-bg)',t:'var(--red-t)',l:'Ne part pas'},
-      amber:{b:'var(--amb-b)',bg:'var(--amb-bg)',t:'var(--amb-t)',l:'Décale à 2'},
-      green:{b:'var(--grn-b)',bg:'var(--grn-bg)',t:'var(--grn-t)',l:'Complet'}
-    };
+    const top=document.createElement('div'); top.className='top';
+    const lbl=document.createElement('span'); lbl.className='lbl';
+    lbl.textContent='🔧 Vérification du matériel'; lbl.style.color=c.t;
+    const bdg=document.createElement('span'); bdg.className='badge';
+    bdg.textContent=present.length+'/'+MATERIEL_MIN; bdg.style.color=c.t;
+    top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
 
-    const grid=document.getElementById('grid');
-    grid.innerHTML='';
-    days.forEach(day=>{
-      const wrap=document.createElement('div'); wrap.className='day';
-      const h=document.createElement('h2');
-      const dd = day.id==='sam'?sat:sun;
-      h.textContent = day.label + (dd? ' '+fmt(dd):'');
-      wrap.appendChild(h);
-      const row=document.createElement('div'); row.className='row';
-      slots.forEach(slot=>{
-        const list=entries(day.id,slot.id);
-        const st=status(list); const c=C[st];
-        const mine = name && state.dispo[name] ? state.dispo[name][sk(day.id,slot.id)] : null;
+    const names=document.createElement('div'); names.className='person';
+    names.textContent = present.length ? present.join(', ') : 'Personne pour l\u2019instant';
+    card.appendChild(names);
 
-        const card=document.createElement('div'); card.className='slot';
-        card.style.borderColor=c.b; card.style.background=c.bg;
+    const rb=document.createElement('div'); rb.className='roles';
+    const b=document.createElement('button');
+    b.textContent = mine ? '✓ Je suis présent' : 'Présent';
+    if(mine) b.className='on';
+    b.onclick=()=>toggleMateriel(dateISO);
+    rb.appendChild(b);
+    card.appendChild(rb);
+    return card;
+  }
 
-        const top=document.createElement('div'); top.className='top';
-        const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent=slot.label; lbl.style.color=c.t;
-        const bdg=document.createElement('span'); bdg.className='badge'; bdg.textContent=c.l; bdg.style.color=c.t;
-        top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
+  function buildDay(dateISO){
+    const wrap=document.createElement('div'); wrap.className='day';
+    const h=document.createElement('h3'); h.textContent=fmtLong(dateISO); wrap.appendChild(h);
+    // Vérif matériel : uniquement le samedi, au-dessus des créneaux
+    if(isSaturday(dateISO)){ wrap.appendChild(buildMateriel(dateISO)); }
+    const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
+    const name=(document.getElementById('name').value||'').trim();
+    slots.forEach(slot=>{
+      const list=entries(dateISO,slot.id);
+      const st=status(list); const c=C[st];
+      const mine = name && state.dispo[dateISO] && state.dispo[dateISO][name]
+        ? state.dispo[dateISO][name][slot.id] : null;
 
-        if(list.length){
-          list.forEach(p=>{
-            const line=document.createElement('div'); line.className='person';
-            const rs=(roles.find(r=>r.id===p.role)||{}).short||'';
-            line.textContent=p.name+' · '+rs+(p.via24?' (24h)':''); card.appendChild(line);
-          });
-        } else {
-          const e=document.createElement('div'); e.className='empty'; e.textContent='—'; card.appendChild(e);
-        }
+      const card=document.createElement('div'); card.className='slot';
+      card.style.borderColor=c.b; card.style.background=c.bg;
 
-        const rb=document.createElement('div'); rb.className='roles';
-        roles.forEach(r=>{
-          const b=document.createElement('button');
-          b.textContent=r.label;
-          if(mine===r.id) b.className='on';
-          b.onclick=()=>setRole(day.id,slot.id,r.id);
-          rb.appendChild(b);
+      const top=document.createElement('div'); top.className='top';
+      const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent=slot.label; lbl.style.color=c.t;
+      const bdg=document.createElement('span'); bdg.className='badge'; bdg.textContent=c.l; bdg.style.color=c.t;
+      top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
+
+      if(list.length){
+        list.forEach(p=>{
+          const line=document.createElement('div'); line.className='person';
+          const rs=(roles.find(r=>r.id===p.role)||{}).short||'';
+          line.textContent=p.name+' · '+rs+(p.via24?' (24h)':'');
+          card.appendChild(line);
         });
-        card.appendChild(rb);
-        row.appendChild(card);
+      } else {
+        const e=document.createElement('div'); e.className='empty'; e.textContent='—'; card.appendChild(e);
+      }
+
+      const rb=document.createElement('div'); rb.className='roles';
+      roles.forEach(r=>{
+        const b=document.createElement('button'); b.textContent=r.label;
+        if(mine===r.id) b.className='on';
+        b.onclick=()=>setRole(dateISO,slot.id,r.id);
+        rb.appendChild(b);
       });
-      wrap.appendChild(row);
-      grid.appendChild(wrap);
+      card.appendChild(rb);
+      row.appendChild(card);
+    });
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function render(){
+    // ligne du mois
+    const ml=document.getElementById('monthline');
+    if(state.month){
+      const [y,m]=state.month.split('-').map(Number);
+      const dt=new Date(Date.UTC(y,m-1,1));
+      ml.textContent=dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric',timeZone:'UTC'});
+    } else { ml.textContent='Mois non renseigné.'; }
+
+    const list=document.getElementById('list'); list.innerHTML='';
+    const wes=weekendsOfMonth(state.month);
+    if(!wes.length){
+      const p=document.createElement('p'); p.className='sub';
+      p.textContent='Choisis un mois pour afficher les week-ends.'; list.appendChild(p); return;
+    }
+
+    wes.forEach((we, idx)=>{
+      const key = (we.sat||we.sun);
+      const box=document.createElement('div'); box.className='we'+(openWE[key]?' open':'');
+
+      const head=document.createElement('div'); head.className='we-head';
+      head.onclick=()=>{ openWE[key]=!openWE[key]; render(); };
+
+      const title=document.createElement('div'); title.className='we-title';
+      if(we.sat && we.sun){ title.textContent=fmtShort(we.sat)+' – '+fmtShort(we.sun); }
+      else { title.textContent=fmtShort(we.sun); }
+
+      const sum=document.createElement('div'); sum.className='we-sum';
+      // pastilles résumé : une par jour présent
+      [we.sat, we.sun].filter(Boolean).forEach(dISO=>{
+        const st=daySummary(dISO); const c=C[st];
+        const pill=document.createElement('span'); pill.className='pill';
+        pill.style.background=c.bg; pill.style.color=c.t; pill.style.border='1px solid '+c.b;
+        pill.textContent=fmtShort(dISO).split(' ')[0]+' '+({red:'✕',amber:'~',green:'✓'})[st];
+        sum.appendChild(pill);
+      });
+      const chev=document.createElement('span'); chev.className='chev'; chev.textContent='▶';
+      sum.appendChild(chev);
+
+      head.appendChild(title); head.appendChild(sum);
+      box.appendChild(head);
+
+      const body=document.createElement('div'); body.className='we-body';
+      [we.sat, we.sun].filter(Boolean).forEach(dISO=>{ body.appendChild(buildDay(dISO)); });
+      box.appendChild(body);
+
+      list.appendChild(box);
     });
   }
 
   document.getElementById('name').addEventListener('input',render);
 
-  document.getElementById('setdate').onclick=()=>{
+  document.getElementById('setmonth').onclick=()=>{
     if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
-    const d=document.getElementById('satdate').value;
-    if(!d){ alert('Choisis la date du samedi'); return; }
-    state.satdate=d; push();
+    const m=document.getElementById('monthpick').value;
+    if(!m){ alert('Choisis un mois'); return; }
+    state.month=m; push();
   };
   document.getElementById('clear').onclick=()=>{
     if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
-    if(!confirm('Vider toutes les réponses ?')) return;
+    if(!confirm('Vider toutes les réponses du tableau ?')) return;
     state.dispo={}; push();
   };
 

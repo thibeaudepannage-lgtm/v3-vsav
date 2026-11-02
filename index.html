@@ -1,420 +1,511 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dispo VSAV — week-ends du mois</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gardes Épieds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-  :root{
-    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2330; --muted:#6b7280; --line:#e3e6ea;
-    --red-b:#e24b4a; --red-bg:#fceaea; --red-t:#a32d2d;
-    --amb-b:#ef9f27; --amb-bg:#faeeda; --amb-t:#854f0b;
-    --grn-b:#1d9e75; --grn-bg:#e1f5ee; --grn-t:#0f6e56;
-    --accent:#185fa5; --accent-bg:#e6f1fb;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0; background:var(--bg); color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    line-height:1.5; padding:16px; max-width:760px; margin:0 auto;}
-  h1{font-size:20px; font-weight:600; margin:4px 0 2px;}
-  .sub{font-size:13px; color:var(--muted); margin:0 0 16px;}
-  .bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
-  input[type=text],input[type=month],input[type=password]{
-    height:38px; padding:0 12px; border:1px solid var(--line); border-radius:8px;
-    font-size:15px; background:#fff; color:var(--ink); outline:none;}
-  input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg);}
-  button{height:38px; padding:0 14px; border:1px solid var(--line); border-radius:8px;
-    background:#fff; color:var(--ink); font-size:14px; cursor:pointer;}
-  button:hover{background:var(--bg);}
-  button:active{transform:scale(.98);}
-  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; margin:4px 0 18px;}
-  .legend span{display:flex; align-items:center; gap:5px;}
-  .dot{width:11px; height:11px; border-radius:3px; display:inline-block;}
-  .we{border:1px solid var(--line); border-radius:14px; background:#fff; margin-bottom:12px; overflow:hidden;}
-  .we-head{display:flex; justify-content:space-between; align-items:center; gap:8px;
-    padding:12px 14px; cursor:pointer; user-select:none;}
-  .we-head:hover{background:var(--bg);}
-  .we-title{font-size:15px; font-weight:600;}
-  .we-sum{display:flex; gap:5px; align-items:center; flex-wrap:wrap;}
-  .pill{font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px;}
-  .chev{color:var(--muted); font-size:13px; transition:transform .15s;}
-  .we.open .chev{transform:rotate(90deg);}
-  .we-body{display:none; padding:0 14px 14px;}
-  .we.open .we-body{display:block;}
-  .day{margin-top:12px;}
-  .day h3{font-size:14px; font-weight:600; margin:0 0 8px; color:var(--ink);}
-  .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;}
-  .slot{border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff;}
-  .slot .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
-  .slot .lbl{font-size:12.5px; font-weight:600;}
-  .slot .badge{font-size:11px; font-weight:600; white-space:nowrap;}
-  .slot .person{font-size:12px; color:var(--muted); line-height:1.5;}
-  .slot .empty{font-size:12px; color:#9aa1ab;}
-  .roles{display:flex; gap:4px; margin-top:8px; flex-wrap:wrap;}
-  .roles button{height:auto; font-size:11px; padding:3px 8px; border-radius:6px; color:var(--muted);}
-  .roles button.on{border-color:var(--accent); background:var(--accent-bg); color:var(--accent);}
-  .admin{margin-top:8px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:#fff;}
-  .admin .arow{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;}
-  .note{font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:16px;}
-  .warn{background:#fff8e6; border:1px solid #f2d98a; color:#7a5a10; padding:10px 12px;
-    border-radius:10px; font-size:13px; margin-bottom:14px;}
+/* Layout: sticky toolbar + day-grouped roster rows (4 posts per slot) + right-hand counter on wide screens */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1b2230; --muted:#5d6676; --line:#dfe3ea;
+  --red:#c8102e; --red-soft:#fbe9ec; --we:#fdf3f2; --fer:#fff6dc;
+  --lvl0:#c8102e; --lvl2:#c66a0e; --lvl3:#1f6aa8; --lvl4:#1d7d5a;
+  --me:#fff1c2; --focus:#1f6aa8;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --panel:#1a2029; --ink:#e8ebf0; --muted:#9aa3b2; --line:#2c3440;
+  --red:#ff5a6e; --red-soft:#3a1d24; --we:#231b1e; --fer:#2a2616;
+  --lvl0:#ff5a6e; --lvl2:#f0a24c; --lvl3:#5aa6e6; --lvl4:#4cc48f; --me:#3b3418; --focus:#5aa6e6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --panel:#1a2029; --ink:#e8ebf0; --muted:#9aa3b2; --line:#2c3440;
+  --red:#ff5a6e; --red-soft:#3a1d24; --we:#231b1e; --fer:#2a2616;
+  --lvl0:#ff5a6e; --lvl2:#f0a24c; --lvl3:#5aa6e6; --lvl4:#4cc48f; --me:#3b3418; --focus:#5aa6e6; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 32px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:20px 12px}
+h1{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:.3px;line-height:1;margin:0;text-wrap:balance}
+h1 span{color:var(--red)}
+.sub{color:var(--muted);font-size:14px;margin-top:4px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.month{display:flex;align-items:center;gap:6px}
+.month b{font-family:var(--display);font-size:24px;min-width:170px;text-align:center;text-transform:capitalize}
+button,select{font:inherit;color:inherit}
+.btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.me{display:flex;align-items:center;gap:6px;margin-left:auto}
+.me select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;background:var(--panel);border:1px solid var(--line)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.l0 .dot,.dot.l0{background:var(--lvl0)}.l2 .dot,.dot.l2{background:var(--lvl2)}.l3 .dot,.dot.l3{background:var(--lvl3)}.l4 .dot,.dot.l4{background:var(--lvl4)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;margin-top:14px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.note{background:var(--red-soft);border-radius:8px;padding:10px 12px;font-size:14px;margin-top:12px}
+.note[hidden]{display:none}
+/* roster */
+.head,.slot{display:grid;grid-template-columns:118px repeat(4,minmax(0,1fr)) 110px;gap:6px;align-items:center}
+.head{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 8px}
+.head small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
+.day{margin-top:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.day.we{background:var(--we)}.day.fer{background:var(--fer)}
+.dayname{font-family:var(--display);font-weight:700;font-size:19px;padding:6px 10px 0;display:flex;gap:8px;align-items:baseline}
+.dayname em{font-style:normal;font-family:var(--body);font-size:12px;color:var(--muted);font-weight:600}
+.slot{padding:6px 8px;border-top:1px solid transparent}
+.slot+.slot{border-top-color:var(--line)}
+.when b{display:block;font-size:14px}.when span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 6px;font-size:14px;min-width:0}
+.cell select.filled{border-color:var(--ink);font-weight:600}
+.cell select.mine{background:var(--me)}
+.cell label{display:none;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.lvl{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
+.lvl.l0{color:var(--lvl0)}.lvl.l2{color:var(--lvl2)}.lvl.l3{color:var(--lvl3)}.lvl.l4{color:var(--lvl4)}
+@media (max-width:720px){
+  .head{display:none}
+  .slot{grid-template-columns:1fr 1fr;row-gap:8px}
+  .when{grid-column:1}.lvl{grid-column:2;justify-content:flex-end}
+  .cell label{display:block}
+}
+/* counter */
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
+@media (max-width:900px){aside{position:static}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h2{font-family:var(--display);font-size:22px;margin:0 0 2px}
+.card p.k{color:var(--muted);font-size:13px;margin:0 0 10px}
+.cnt{display:grid;grid-template-columns:118px minmax(0,1fr) 48px;gap:4px 8px;align-items:center;font-size:13px;padding:4px 4px;border-radius:6px}
+.cnt.isme{background:var(--me)}
+.cnt b{font-weight:600;line-height:1.15}
+.cnt .split{display:block;font-weight:400;font-size:11px;color:var(--muted);white-space:nowrap}
+.cnt .split.short{color:var(--lvl2)}
+.track{height:10px;background:var(--line);border-radius:5px;position:relative;overflow:hidden}
+.fill{height:100%;border-radius:5px;background:var(--lvl3)}
+.fill.ok{background:var(--lvl4)}.fill.low{background:var(--lvl2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.grp{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:10px 0 2px}
+.rules{margin-top:12px;font-size:13px;color:var(--muted);display:grid;gap:4px}
+.rules b{color:var(--ink)}
+.empty{color:var(--muted);font-size:14px;padding:12px 0}
+@media (prefers-reduced-motion:no-preference){.fill{transition:width .3s}}
+.verif{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding:8px 12px;border-radius:10px;border:1.5px dashed var(--muted);background:var(--panel)}
+.verif .vt{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.3px}
+.verif .vw{font-size:12px;color:var(--muted)}
+.verif select{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 6px;font-size:14px;font-weight:600}
+.verif select.mine{background:var(--me)}
+.verif .vx{font-size:12px;color:var(--muted);margin-left:auto}
+.verif.mine{border-color:var(--ink)}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tbl{overflow-x:auto}
+#bilan table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+#bilan th{text-align:right;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-bottom:1px solid var(--line)}
+#bilan th:first-child,#bilan td:first-child{text-align:left}
+#bilan td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)}
+#bilan textarea{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;font-size:12px}
+.adm{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.adm form{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.adm input{font:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0;width:170px}
+.err{color:var(--red);font-size:13px;width:100%;text-align:right}
 </style>
+
 </head>
 <body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Gardes <span>Épieds</span></h1>
+      <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · choisis ton nom sur un poste</div>
+    </div>
+    <div class="adm"><button class="btn" id="admBtn">Accès chef de centre</button>
+      <form id="admForm" hidden><input id="admPwd" type="password" placeholder="Mot de passe" autocomplete="current-password" required><button class="btn" type="submit">Se connecter</button><span id="admErr" class="err"></span></form>
+    </div>
+  </header>
 
-<h1>Disponibilités VSAV — week-ends du mois</h1>
-<p class="sub" id="monthline">Renseigne le mois.</p>
-
-<div id="fbwarn" class="warn" style="display:none;">
-  ⚠️ Connexion à la base non établie : les réponses ne sont pas partagées. Vérifie la config Firebase.
-</div>
-
-<div class="bar">
-  <input type="text" id="name" placeholder="Ton nom" style="flex:1; min-width:160px;" />
-</div>
-
-<div class="legend">
-  <span><span class="dot" style="background:var(--red-b)"></span>Ne part pas</span>
-  <span><span class="dot" style="background:var(--amb-b)"></span>Décale à 2</span>
-  <span><span class="dot" style="background:var(--grn-b)"></span>Complet</span>
-</div>
-
-<div id="list"></div>
-
-<div class="admin">
-  <div style="font-size:13px; font-weight:600;">Réservé chef de centre</div>
-  <div class="arow">
-    <input type="password" id="pw" placeholder="Mot de passe" style="width:140px;" />
-    <input type="month" id="monthpick" />
-    <button id="setmonth">Choisir le mois</button>
-    <button id="clear">Vider le tableau</button>
+  <div class="bar">
+    <div class="month">
+      <button class="btn" id="prev" aria-label="Mois précédent">‹</button>
+      <b id="mlabel">novembre 2026</b>
+      <button class="btn" id="next" aria-label="Mois suivant">›</button>
+    </div>
+    <button class="btn" id="onlyGaps" aria-pressed="false">Créneaux à compléter</button>
+    <label class="me">Je suis
+      <select id="meSel"><option value="">—</option></select>
+    </label>
   </div>
-  <div style="font-size:12px; color:var(--muted); margin-top:6px;">
-    Choisis le mois : tous les samedis et dimanches sont générés automatiquement.
+
+  <div class="summary" id="summary"></div>
+  <div class="note" id="note" hidden></div>
+
+  <div class="layout">
+    <main>
+      <div class="head"><span>Créneau</span>
+        <span>Chef d'agrès<small>Thibaud · David · Fabrice · Jérôme (CCR)</small></span>
+        <span>Conducteur CCR<small>Thibaud · David · Fabrice · Jérôme</small></span>
+        <span>Conducteur VSAV<small>Baptiste · Bertrand · Coralie · un chef</small></span>
+        <span>Équipier<small>Tout le monde</small></span>
+        <span style="text-align:right">Départ possible</span></div>
+      <div id="roster"></div>
+    </main>
+    <aside>
+      <div class="card">
+        <h2>Compteur du mois</h2>
+        <p class="k" id="quotaTxt"></p>
+        <div id="counter"></div>
+        <div class="rules">
+          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b></div>
+          <div>Dispo seulement le week-end : <b>1 nuit + 1 journée complète</b> chaque week-end.</div>
+          <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un du même poste.</div>
+          <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine (un qualifié + deux autres), celui qui en a fait le moins passe en premier. Échange possible.</div>
+          <div id="myVerif"></div>
+        </div>
+      </div>
+      <div class="card" id="bilan" hidden style="margin-top:14px">
+        <h2>Bilan chef de centre</h2>
+        <p class="k">Visible uniquement en accès chef de centre · <span id="bilanPer"></span></p>
+        <div class="tabs"><button class="btn" data-mode="mois" aria-pressed="true">Ce mois</button><button class="btn" data-mode="tout" aria-pressed="false">Depuis le début</button></div>
+        <div class="tbl"><table><thead><tr><th>Agent</th><th>Créneaux</th><th>Heures</th><th>Vérifs</th></tr></thead><tbody id="bilanBody"></tbody></table></div>
+        <button class="btn" id="copyBilan" style="margin-top:10px">Copier le bilan</button>
+        <textarea id="bilanTxt" hidden rows="6" style="width:100%;margin-top:8px" aria-label="Bilan à copier"></textarea>
+      </div>
+    </aside>
   </div>
 </div>
-
-<p class="note">
-  Chaque pompier tape son nom, ouvre un week-end et clique son rôle sur les créneaux.
-  Le VSAV décale dès qu'il y a de quoi conduire (conducteur ou chef d'agrès) + un équipier.
-  Il est complet avec les trois rôles : équipier, conducteur et chef d'agrès.
-  Cocher « 24 h » compte aussi pour le matin, l'après-midi et la soirée du même jour.
-</p>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, onValue, set }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // ===== CONFIG FIREBASE (tes clés) =====
-  const firebaseConfig = {
-    apiKey: "AIzaSyDFtp_IJO7Wu3EJYshl2h2rkVaY0CNGygo",
-    authDomain: "garde-vsav.firebaseapp.com",
-    databaseURL: "https://garde-vsav-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "garde-vsav",
-    storageBucket: "garde-vsav.firebasestorage.app",
-    messagingSenderId: "929154869610",
-    appId: "1:929154869610:web:cb511cbc73401d3cc9dd13"
+/* ===== CONFIG FIREBASE (ton projet garde-vsav) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDFtp_IJO7Wu3EJYshl2h2rkVaY0CNGygo",
+  authDomain: "garde-vsav.firebaseapp.com",
+  databaseURL: "https://garde-vsav-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "garde-vsav",
+  storageBucket: "garde-vsav.firebasestorage.app",
+  messagingSenderId: "929154869610",
+  appId: "1:929154869610:web:cb511cbc73401d3cc9dd13"
+};
+const ADMIN_PASSWORD = "caserne45";   // accès chef de centre (le même qu'avant), change-le si tu veux
+/* =================================================== */
+const app=initializeApp(firebaseConfig), rdb=getDatabase(app);
+const BASE="planning";
+
+const QUALIF=["Thibaud","David","Fabrice","Jérôme"];
+const OTHERS=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];
+const VSAV_CHEFS=["Thibaud","David","Fabrice"];
+const POSTS=[
+  {k:"chef",label:"Chef d'agrès",who:["Thibaud","David","Fabrice","Jérôme"]},
+  {k:"ccr",label:"Conducteur CCR",who:["Thibaud","David","Fabrice","Jérôme"]},
+  {k:"vsav",label:"Conducteur VSAV",who:["Baptiste","Bertrand","Coralie","Thibaud","David","Fabrice"]},
+  {k:"eq",label:"Équipier",who:[...QUALIF,...OTHERS]}
+];
+const FERIES=new Set(["2026-11-11","2026-12-25","2027-01-01","2027-03-29","2027-05-01","2027-05-06","2027-05-08","2027-05-17","2027-07-14","2027-08-15","2027-11-01","2027-11-11","2027-12-25"]);
+const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
+const FIRST=[2026,10], LAST=[2027,11];
+let cur=[2026,10];
+let cells={};           // key "slot__post" -> name
+let verifOv={};         // mondayISO -> {a,b} overrides
+const ROT0=new Date(2026,10,2); // lundi 2 nov. 2026 = semaine 0 du tour de rôle
+const ROT_A=["Thibaud","David","Fabrice","Jérôme"];
+const ROT_B=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"]; // choix possibles
+const ROT_B_FALLBACK=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];     // tour de rôle si personne n'est inscrit (sans Cassandre)
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function mondayOf(ds){const [y,m,d]=ds.split("-").map(Number); const x=new Date(y,m-1,d); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return x}
+let VERIF={};   // mondayISO -> {k,a,b,mode}
+/* Vérif : parmi les inscrits de la semaine, celui qui a fait le moins de vérifs depuis le début ;
+   un qualifié + un autre ; si personne d'inscrit, tour de rôle fixe ; un échange manuel l'emporte. */
+function computeVerifs(){
+  const byDate={};
+  for(const [k,n] of Object.entries(cells)){const ds=k.slice(0,10); (byDate[ds]=byDate[ds]||new Set()).add(n)}
+  const count={}; VERIF={};
+  const end=new Date(LAST[0],LAST[1]+1,0);
+  for(let mon=new Date(ROT0.getTime()-7*864e5), i=-1; mon<=end; mon.setDate(mon.getDate()+7), i++){
+    const present=new Set();
+    for(let d=0;d<7;d++){const x=new Date(mon); x.setDate(x.getDate()+d); (byDate[iso(x)]||[]).forEach(n=>present.add(n))}
+    const pick=(pool,fallback,avoid)=>{
+      let list=pool.filter(n=>n!==avoid), mode="inscrits";
+      if(!list.length){list=fallback.filter(n=>n!==avoid); mode="tour"}
+      const off=((i%list.length)+list.length)%list.length;
+      const ordered=[...list.slice(off),...list.slice(0,off)];
+      let best=ordered[0]; for(const n of ordered) if((count[n]||0)<(count[best]||0)) best=n;
+      return [best,mode];
+    };
+    const k=iso(mon), o=verifOv[k]||{};
+    const [a0,ma]=pick(ROT_A.filter(n=>present.has(n)),ROT_A,null);
+    const a=o.a||a0;
+    const poolB=[...present].filter(n=>!ROT_A.includes(n));
+    const [b0,mb]=pick(poolB,ROT_B_FALLBACK,a);
+    const b=o.b||b0;
+    const [c0,mc]=pick(poolB.filter(n=>n!==b),ROT_B_FALLBACK.filter(n=>n!==b),a);
+    const c=o.c||c0;
+    const mode=(o.a||o.b||o.c)?"échange":(ma==="inscrits"&&mb==="inscrits"&&mc==="inscrits")?"inscrits":"tour";
+    VERIF[k]={k,a,b,c,mode,mon:new Date(mon)};
+    for(const n of [a,b,c]) count[n]=(count[n]||0)+1;
+  }
+}
+function verifFor(mon){return VERIF[iso(mon)]||{k:iso(mon),a:ROT_A[0],b:ROT_B_FALLBACK[0],c:ROT_B_FALLBACK[1],mode:"tour"}}
+let isAdmin=false, bilanMode="mois";
+let db=null, unsub=null, canWrite=true, loadTimer=null, onlyGaps=false;
+let me=""; try{me=localStorage.getItem("gardes-me")||""}catch(e){}
+
+const pad=n=>String(n).padStart(2,"0");
+const mkey=([y,m])=>`${y}-${pad(m+1)}`;
+function slotsOf([y,m]){
+  const out=[]; const d=new Date(y,m,1);
+  while(d.getMonth()===m){
+    const ds=`${y}-${pad(m+1)}-${pad(d.getDate())}`, wd=d.getDay();
+    const fer=FERIES.has(ds), we=wd===0||wd===6;
+    const day={ds,wd,fer,we,slots:[]};
+    if(we||fer){
+      day.slots.push({id:ds+"_m",c:"Matin",h:"7h → 13h",hrs:6},{id:ds+"_a",c:"Après-midi",h:"13h → 19h",hrs:6},{id:ds+"_n",c:"Nuit",h:"19h → 7h",hrs:12});
+    } else day.slots.push({id:ds+"_n",c:"Nuit",h:"19h → 7h",hrs:12});
+    out.push(day); d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+function level(sid){
+  const v=POSTS.map(p=>cells[sid+"__"+p.k]||"");
+  const names=v.filter(Boolean), n=names.length;
+  if(n===4) return 4;
+  const chefV=names.filter(x=>VSAV_CHEFS.includes(x)).length;
+  const driver=!!v[2]||chefV>=2;
+  if(n>=3&&chefV>=1&&driver) return 3;
+  if(n>=2) return 2;
+  return 0;
+}
+const LVL={0:"Rien ne part",2:"Prompt secours",3:"Ambulance",4:"CCR armé"};
+
+function render(){
+  document.getElementById("mlabel").textContent=new Date(cur[0],cur[1],1).toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+  document.getElementById("prev").disabled=cur[0]===FIRST[0]&&cur[1]===FIRST[1];
+  document.getElementById("next").disabled=cur[0]===LAST[0]&&cur[1]===LAST[1];
+  computeVerifs();
+  const days=slotsOf(cur), roster=document.getElementById("roster"); roster.textContent="";
+  const tally={0:0,2:0,3:0,4:0}; let nSlots=0;
+  const myV=[];
+  for(const day of days){
+    if(day.wd===1||day.ds.endsWith("-01")){
+      const mon=mondayOf(day.ds), v=verifFor(mon);
+      const sun=new Date(mon); sun.setDate(sun.getDate()+6);
+      if(me&&[v.a,v.b,v.c].includes(me)) myV.push(`semaine du ${pad(mon.getDate())}/${pad(mon.getMonth()+1)}`);
+      if(!onlyGaps) roster.appendChild(verifBand(v,mon,sun));
+    }
+    const box=document.createElement("section");
+    box.className="day"+(day.fer?" fer":day.we?" we":"");
+    const dn=document.createElement("div"); dn.className="dayname";
+    const [y,mo,dd]=day.ds.split("-");
+    dn.textContent=`${JOURS[day.wd]} ${dd}/${mo}`;
+    if(day.fer){const e=document.createElement("em");e.textContent="férié";dn.appendChild(e)}
+    let shown=0;
+    for(const s of day.slots){
+      nSlots++; const lv=level(s.id); tally[lv]++;
+      if(onlyGaps&&lv===4) continue;
+      shown++;
+      const row=document.createElement("div"); row.className="slot";
+      const w=document.createElement("div"); w.className="when";
+      const wb=document.createElement("b"); wb.textContent=s.c; const ws=document.createElement("span"); ws.textContent=s.h;
+      w.append(wb,ws); row.appendChild(w);
+      const inSlot=POSTS.map(p=>cells[s.id+"__"+p.k]||"");
+      POSTS.forEach((p,i)=>{
+        const c=document.createElement("div"); c.className="cell";
+        const lab=document.createElement("label"); const sid=`sel-${s.id}-${p.k}`; lab.htmlFor=sid; lab.textContent=p.label;
+        const sel=document.createElement("select"); sel.id=sid; sel.disabled=!canWrite||!db;
+        const o0=document.createElement("option"); o0.value=""; o0.textContent="—"; sel.appendChild(o0);
+        for(const n of p.who){
+          const o=document.createElement("option"); o.value=n; o.textContent=n;
+          if(inSlot.includes(n)&&inSlot[i]!==n) o.disabled=true;
+          sel.appendChild(o);
+        }
+        sel.value=inSlot[i];
+        if(inSlot[i]) sel.classList.add("filled");
+        if(me&&inSlot[i]===me) sel.classList.add("mine");
+        sel.addEventListener("change",()=>save(s.id,p.k,sel.value,s));
+        c.append(lab,sel); row.appendChild(c);
+      });
+      const l=document.createElement("div"); l.className="lvl l"+lv;
+      const dot=document.createElement("span"); dot.className="dot l"+lv; l.append(dot,document.createTextNode(LVL[lv]));
+      row.appendChild(l); box.appendChild(row);
+    }
+    if(shown){box.prepend(dn); roster.appendChild(box)}
+  }
+  if(onlyGaps&&!roster.childElementCount){const p=document.createElement("p");p.className="empty";p.textContent="Tous les créneaux du mois sont armés à 4.";roster.appendChild(p)}
+  const sm=document.getElementById("summary"); sm.textContent="";
+  for(const [lv,txt] of [[4,"CCR armé"],[3,"Ambulance"],[2,"Prompt secours"],[0,"Rien ne part"]]){
+    const c=document.createElement("span"); c.className="chip l"+lv;
+    const d=document.createElement("span"); d.className="dot";
+    c.append(d,document.createTextNode(`${tally[lv]} · ${txt}`)); sm.appendChild(c);
+  }
+  const t=document.createElement("span"); t.className="chip"; t.textContent=`${nSlots} créneaux dans le mois`; sm.appendChild(t);
+  renderCounter(days,nSlots);
+  const mv=document.getElementById("myVerif");
+  mv.textContent=me?(myV.length?`${me}, ta vérif ce mois : ${myV.join(", ")}.`:`${me}, pas de vérif pour toi ce mois-ci.`):"";
+}
+function verifBand(v,mon,sun){
+  const b=document.createElement("div"); b.className="verif"+(me&&[v.a,v.b,v.c].includes(me)?" mine":"");
+  const t=document.createElement("span"); t.className="vt"; t.textContent="Vérif de la semaine";
+  const w=document.createElement("span"); w.className="vw"; w.textContent=`du ${pad(mon.getDate())}/${pad(mon.getMonth()+1)} au ${pad(sun.getDate())}/${pad(sun.getMonth()+1)}`;
+  b.append(t,w);
+  for(const [f,list,lab] of [["a",ROT_A,"Qualifié"],["b",ROT_B,"Équipier 1"],["c",ROT_B,"Équipier 2"]]){
+    const s=document.createElement("select"); s.id=`verif-${v.k}-${f}`; s.setAttribute("aria-label",`${lab} vérif semaine du ${v.k}`);
+    s.disabled=!canWrite||!db;
+    for(const n of list){const o=document.createElement("option");o.value=n;o.textContent=n;s.appendChild(o)}
+    s.value=v[f]; if(me&&v[f]===me) s.classList.add("mine");
+    s.addEventListener("change",()=>saveVerif(v.k,f,s.value));
+    b.appendChild(s);
+  }
+  const x=document.createElement("span"); x.className="vx"; x.textContent=v.mode==="échange"?"échange enregistré":v.mode==="inscrits"?"choisis parmi les inscrits de la semaine":"tour de rôle (pas assez d'inscrits)";
+  b.appendChild(x);
+  return b;
+}
+async function saveVerif(k,f,val){
+  if(!db) return;
+  const prev=verifOv[k]; const nv={...(prev||{}),[f]:val};
+  verifOv[k]=nv; render();
+  try{await set(ref(rdb,BASE+"/verif/"+k),nv)}
+  catch(e){ if(prev) verifOv[k]=prev; else delete verifOv[k]; showNote("L'échange de vérif n'a pas été enregistré. Réessaie dans un instant."); render()}
+}
+
+function renderCounter(days,nSlots){
+  const cnt={}, sem={}, we={};
+  const kind={}; days.forEach(d=>d.slots.forEach(s=>kind[s.id]=(d.we||d.fer)?"we":"sem"));
+  for(const [k,n] of Object.entries(cells)){
+    const sid=k.split("__")[0]; if(!(sid in kind)) continue;
+    cnt[n]=(cnt[n]||0)+1; if(kind[sid]==="we") we[n]=(we[n]||0)+1; else sem[n]=(sem[n]||0)+1;
+  }
+  const nSem=Object.values(kind).filter(x=>x==="sem").length, nWe=nSlots-nSem;
+  const qQs=Math.round(nSem*2/4), qQw=Math.round(nWe*2/4), qOs=Math.round(nSem*2/6), qOw=Math.round(nWe*2/6);
+  const qQ=qQs+qQw, qO=qOs+qOw;
+  document.getElementById("quotaTxt").textContent=`Minimum pour armer le CCR à 4, si tout le monde se répartit parfaitement. Qualifiés : ${qQs} nuits en semaine + ${qQw} créneaux le week-end. Les autres : ${qOs} nuits en semaine + ${qOw} créneaux le week-end. Viser un peu plus, là où il manque du monde.`;
+  const box=document.getElementById("counter"); box.textContent="";
+  const group=(title,list,q,qs,qw)=>{
+    const g=document.createElement("div"); g.className="grp"; g.textContent=`${title} · minimum ${qs} sem. + ${qw} WE`; box.appendChild(g);
+    for(const n of list){
+      const c=cnt[n]||0, r=document.createElement("div"); r.className="cnt"+(n===me?" isme":"");
+      const b=document.createElement("b"); b.textContent=n;
+      const sm=document.createElement("small"); sm.className="split";
+      const s1=sem[n]||0, w1=we[n]||0;
+      sm.textContent=`sem. ${s1}/${qs} · WE ${w1}/${qw}`;
+      if(s1<qs||w1<qw) sm.classList.add("short");
+      b.appendChild(sm);
+      const tr=document.createElement("div"); tr.className="track";
+      const f=document.createElement("div"); f.className="fill "+(c>=q?"ok":c>=q/2?"":"low"); f.style.width=Math.min(100,100*c/q)+"%"; tr.appendChild(f);
+      const num=document.createElement("span"); num.className="num"; num.textContent=`${c}/${q}`;
+      r.append(b,tr,num); box.appendChild(r);
+    }
   };
+  group("Chef / conducteur CCR",QUALIF,qQ,qQs,qQw);
+  group("Conducteurs VSAV et équipiers",OTHERS,qO,qOs,qOw);
+  renderBilan();
+}
+function slotHours(sid){return sid.endsWith("_n")?12:6}
+function bilanData(){
+  const mk=mkey(cur), today=new Date(); today.setHours(0,0,0,0);
+  const inPeriod=ds=>bilanMode==="mois"?ds.startsWith(mk):true;
+  const rows={}; [...QUALIF,...OTHERS].forEach(n=>rows[n]={c:0,h:0,v:0});
+  for(const [k,n] of Object.entries(cells)){
+    const sid=k.split("__")[0], ds=sid.slice(0,10);
+    if(!inPeriod(ds)||!rows[n]) continue; rows[n].c++; rows[n].h+=slotHours(sid);
+  }
+  for(const v of Object.values(VERIF)){
+    if(v.mon>today) continue;
+    if(bilanMode==="mois"&&!iso(v.mon).startsWith(mk)) continue;
+    for(const n of [v.a,v.b,v.c]) if(rows[n]) rows[n].v++;
+  }
+  return rows;
+}
+function renderBilan(){
+  const card=document.getElementById("bilan"); card.hidden=!isAdmin; if(!isAdmin) return;
+  document.getElementById("bilanPer").textContent=bilanMode==="mois"?document.getElementById("mlabel").textContent:"depuis novembre 2026";
+  document.querySelectorAll("#bilan [data-mode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===bilanMode));
+  const rows=bilanData(), tb=document.getElementById("bilanBody"); tb.textContent="";
+  for(const n of [...QUALIF,...OTHERS]){
+    const r=rows[n], tr=document.createElement("tr");
+    for(const val of [n,r.c,r.h+" h",r.v]){const td=document.createElement("td"); td.textContent=val; tr.appendChild(td)}
+    tb.appendChild(tr);
+  }
+}
+function bilanText(){
+  const rows=bilanData();
+  const head=`Bilan gardes CIS Épieds — ${document.getElementById("bilanPer").textContent}\nNom ; créneaux ; heures ; vérifs faites`;
+  return head+"\n"+[...QUALIF,...OTHERS].map(n=>`${n} ; ${rows[n].c} ; ${rows[n].h} ; ${rows[n].v}`).join("\n");
+}
 
-  const ADMIN_PASSWORD = "caserne45";   // <-- change-le si tu veux
-  // ======================================
-
-  const slots = [
-    {id:'matin',label:'Matin · 7h-14h'},
-    {id:'aprem',label:'Après-midi · 14h-21h'},
-    {id:'soir', label:'Soirée + nuit · 21h-7h'},
-    {id:'j24',  label:'24 h'}
-  ];
-  const roles = [
-    {id:'cond',label:'Conducteur',short:'conducteur'},
-    {id:'chef',label:'Chef d\u2019agrès',short:'chef agrès'},
-    {id:'equi',label:'Équipier',short:'équipier'}
-  ];
-
-  let db=null, live=false;
-  // state.month="2026-08" ; state.dispo[dateISO][name]={slotId:role} ; state.materiel[dateISO][name]=true
-  let state = { month:"", dispo:{}, materiel:{} };
-  let openWE = {}; // quels week-ends sont ouverts (local, non partagé)
-  const MATERIEL_MIN = 2;
-
+async function save(sid,post,name,s){
+  if(!db) return;
+  const r=ref(rdb,BASE+"/gardes/"+sid+"__"+post);
+  const prev=cells[sid+"__"+post];
+  if(name) cells[sid+"__"+post]=name; else delete cells[sid+"__"+post];
+  render();
   try{
-    const app = initializeApp(firebaseConfig);
-    db = getDatabase(app);
-    live = true;
-    onValue(ref(db,'garde_mois'), snap=>{
-      const v = snap.val() || {};
-      state.month = v.month || "";
-      state.dispo = v.dispo || {};
-      state.materiel = v.materiel || {};
-      render();
-    }, err=>{ live=false; document.getElementById('fbwarn').style.display='block'; });
-  }catch(e){ live=false; document.getElementById('fbwarn').style.display='block'; }
-
-  function push(){
-    if(live){ set(ref(db,'garde_mois'), {month:state.month, dispo:state.dispo, materiel:state.materiel}).catch(()=>{}); }
+    await set(r,name||null);
+  }catch(e){
+    if(prev) cells[sid+"__"+post]=prev; else delete cells[sid+"__"+post];
+    showNote("L'inscription n'a pas été enregistrée. Réessaie dans un instant.");
     render();
   }
+}
+function showNote(t){const n=document.getElementById("note"); n.textContent=t; n.hidden=!t}
 
-  // ---- Dates ----
-  function parseYMD(str){ const p=str.split('-').map(Number); return {y:p[0],m:p[1],d:p[2]}; }
-  function iso(y,m,d){ return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
-  function fmtLong(str){
-    const {y,m,d}=parseYMD(str);
-    const dt=new Date(Date.UTC(y,m-1,d));
-    return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
-  }
-  function fmtShort(str){
-    const {y,m,d}=parseYMD(str);
-    const dt=new Date(Date.UTC(y,m-1,d));
-    return dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',timeZone:'UTC'});
-  }
-  // renvoie la liste des week-ends du mois : [{sat:iso, sun:iso}]
-  function weekendsOfMonth(month){
-    if(!month) return [];
-    const [y,m]=month.split('-').map(Number);
-    const res=[]; const daysIn=new Date(Date.UTC(y,m,0)).getUTCDate();
-    for(let d=1; d<=daysIn; d++){
-      const dt=new Date(Date.UTC(y,m-1,d));
-      const wd=dt.getUTCDay(); // 0=dim, 6=sam
-      if(wd===6){ // samedi
-        const sat=iso(y,m,d);
-        // dimanche = lendemain (peut basculer sur mois suivant)
-        const sd=new Date(Date.UTC(y,m-1,d)); sd.setUTCDate(sd.getUTCDate()+1);
-        const sun=iso(sd.getUTCFullYear(), sd.getUTCMonth()+1, sd.getUTCDate());
-        res.push({sat, sun});
-      } else if(wd===0 && d===1){
-        // dimanche 1er du mois sans samedi avant -> week-end orphelin
-        res.push({sat:null, sun:iso(y,m,d)});
-      }
-    }
-    return res;
-  }
+function subscribe(){
+  if(unsub){unsub();unsub=null}
+  clearTimeout(loadTimer);
+  loadTimer=setTimeout(()=>showNote("La base ne répond pas encore. Les inscriptions affichées peuvent ne pas être à jour."),10000);
+  unsub=onValue(ref(rdb,BASE+"/gardes"),snap=>{
+    clearTimeout(loadTimer); showNote("");
+    const v=snap.val()||{}, next={};
+    for(const [k,n] of Object.entries(v)){ if(typeof n==="string"&&/^\d{4}-\d{2}-\d{2}_[man]__(chef|ccr|vsav|eq)$/.test(k)) next[k]=n }
+    cells=next; render();
+  },()=>{clearTimeout(loadTimer); showNote("Impossible de lire la base. Vérifie les règles de la Realtime Database dans Firebase.")});
+}
+function move(dir){
+  let [y,m]=cur; m+=dir; if(m<0){m=11;y--} if(m>11){m=0;y++}
+  cur=[y,m]; render();
+}
+document.querySelectorAll("#bilan [data-mode]").forEach(b=>b.onclick=()=>{bilanMode=b.dataset.mode; renderBilan()});
+document.getElementById("copyBilan").onclick=async e=>{
+  const btn=e.currentTarget, txt=bilanText();
+  try{await navigator.clipboard.writeText(txt); btn.textContent="Bilan copié"; setTimeout(()=>btn.textContent="Copier le bilan",2000)}
+  catch(err){const ta=document.getElementById("bilanTxt"); ta.hidden=false; ta.value=txt; ta.select()}
+};
+document.getElementById("prev").onclick=()=>move(-1);
+document.getElementById("next").onclick=()=>move(1);
+document.getElementById("onlyGaps").onclick=e=>{onlyGaps=!onlyGaps; e.currentTarget.setAttribute("aria-pressed",onlyGaps); render()};
+const meSel=document.getElementById("meSel");
+for(const n of [...QUALIF,...OTHERS]){const o=document.createElement("option");o.value=n;o.textContent=n;meSel.appendChild(o)}
+meSel.value=me;
+meSel.onchange=()=>{me=meSel.value; try{localStorage.setItem("gardes-me",me)}catch(e){} render()};
 
-  function sk(s){ return s; }
-
-  // entries pour une date + un créneau (avec règle 24h)
-  function entries(dateISO, slotId){
-    const day = state.dispo[dateISO] || {};
-    const byName={};
-    Object.keys(day).forEach(n=>{
-      const u=day[n]; if(!u) return;
-      if(u[slotId]){ byName[n]={role:u[slotId],via24:false}; }
-      else if(slotId!=='j24' && u['j24']){ byName[n]={role:u['j24'],via24:true}; }
-    });
-    return Object.keys(byName).map(n=>({name:n,role:byName[n].role,via24:byName[n].via24}))
-      .sort((a,b)=>a.name.localeCompare(b.name));
-  }
-
-  function status(list){
-    const nC=list.filter(p=>p.role==='cond').length;
-    const nH=list.filter(p=>p.role==='chef').length;
-    const nE=list.filter(p=>p.role==='equi').length;
-    const total=list.length, canDrive=(nC+nH)>=1;
-    if(nE>=1 && nC>=1 && nH>=1) return 'green';
-    if(canDrive && total>=2 && nE>=1) return 'amber';
-    if(canDrive && total>=2 && (nC+nH)>=2) return 'amber';
-    return 'red';
-  }
-
-  function needName(){
-    const inp=document.getElementById('name');
-    if(inp.value.trim()) return inp.value.trim();
-    inp.style.boxShadow='0 0 0 3px var(--red-bg)';
-    inp.style.borderColor='var(--red-b)';
-    inp.placeholder='Écris ton nom d\u2019abord';
-    setTimeout(()=>{inp.style.boxShadow='';inp.style.borderColor='';},1500);
-    return null;
-  }
-
-  function setRole(dateISO, slotId, role){
-    const name=needName(); if(!name) return;
-    if(!state.dispo[dateISO]) state.dispo[dateISO]={};
-    if(!state.dispo[dateISO][name]) state.dispo[dateISO][name]={};
-    const cur=state.dispo[dateISO][name];
-    if(cur[slotId]===role) delete cur[slotId];
-    else cur[slotId]=role;
-    if(Object.keys(cur).length===0) delete state.dispo[dateISO][name];
-    if(Object.keys(state.dispo[dateISO]).length===0) delete state.dispo[dateISO];
-    push();
-  }
-
-  const C={
-    red:{b:'var(--red-b)',bg:'var(--red-bg)',t:'var(--red-t)',l:'Ne part pas'},
-    amber:{b:'var(--amb-b)',bg:'var(--amb-bg)',t:'var(--amb-t)',l:'Décale à 2'},
-    green:{b:'var(--grn-b)',bg:'var(--grn-bg)',t:'var(--grn-t)',l:'Complet'}
-  };
-
-  function daySummary(dateISO){
-    // couleur "pire cas" des 3 vraies plages (matin/aprem/soir)
-    const order={red:0,amber:1,green:2};
-    let worst='green';
-    ['matin','aprem','soir'].forEach(s=>{
-      const st=status(entries(dateISO,s));
-      if(order[st]<order[worst]) worst=st;
-    });
-    return worst;
-  }
-
-  // ---- Présence vérification matériel (samedis) ----
-  function materielList(dateISO){
-    const day=state.materiel[dateISO]||{};
-    return Object.keys(day).filter(n=>day[n]).sort((a,b)=>a.localeCompare(b));
-  }
-  function toggleMateriel(dateISO){
-    const name=needName(); if(!name) return;
-    if(!state.materiel[dateISO]) state.materiel[dateISO]={};
-    if(state.materiel[dateISO][name]) delete state.materiel[dateISO][name];
-    else state.materiel[dateISO][name]=true;
-    if(Object.keys(state.materiel[dateISO]).length===0) delete state.materiel[dateISO];
-    push();
-  }
-  function isSaturday(dateISO){
-    const {y,m,d}=parseYMD(dateISO);
-    return new Date(Date.UTC(y,m-1,d)).getUTCDay()===6;
-  }
-  function buildMateriel(dateISO){
-    const name=(document.getElementById('name').value||'').trim();
-    const present=materielList(dateISO);
-    const ok=present.length>=MATERIEL_MIN;
-    const c=ok?C.green:C.red;
-    const mine = name && state.materiel[dateISO] && state.materiel[dateISO][name];
-
-    const card=document.createElement('div'); card.className='slot';
-    card.style.borderColor=c.b; card.style.background=c.bg; card.style.marginTop='4px';
-
-    const top=document.createElement('div'); top.className='top';
-    const lbl=document.createElement('span'); lbl.className='lbl';
-    lbl.textContent='🔧 Vérification du matériel'; lbl.style.color=c.t;
-    const bdg=document.createElement('span'); bdg.className='badge';
-    bdg.textContent=present.length+'/'+MATERIEL_MIN; bdg.style.color=c.t;
-    top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
-
-    const names=document.createElement('div'); names.className='person';
-    names.textContent = present.length ? present.join(', ') : 'Personne pour l\u2019instant';
-    card.appendChild(names);
-
-    const rb=document.createElement('div'); rb.className='roles';
-    const b=document.createElement('button');
-    b.textContent = mine ? '✓ Je suis présent' : 'Présent';
-    if(mine) b.className='on';
-    b.onclick=()=>toggleMateriel(dateISO);
-    rb.appendChild(b);
-    card.appendChild(rb);
-    return card;
-  }
-
-  function buildDay(dateISO){
-    const wrap=document.createElement('div'); wrap.className='day';
-    const h=document.createElement('h3'); h.textContent=fmtLong(dateISO); wrap.appendChild(h);
-    // Vérif matériel : uniquement le samedi, au-dessus des créneaux
-    if(isSaturday(dateISO)){ wrap.appendChild(buildMateriel(dateISO)); }
-    const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
-    const name=(document.getElementById('name').value||'').trim();
-    slots.forEach(slot=>{
-      const list=entries(dateISO,slot.id);
-      const st=status(list); const c=C[st];
-      const mine = name && state.dispo[dateISO] && state.dispo[dateISO][name]
-        ? state.dispo[dateISO][name][slot.id] : null;
-
-      const card=document.createElement('div'); card.className='slot';
-      card.style.borderColor=c.b; card.style.background=c.bg;
-
-      const top=document.createElement('div'); top.className='top';
-      const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent=slot.label; lbl.style.color=c.t;
-      const bdg=document.createElement('span'); bdg.className='badge'; bdg.textContent=c.l; bdg.style.color=c.t;
-      top.appendChild(lbl); top.appendChild(bdg); card.appendChild(top);
-
-      if(list.length){
-        list.forEach(p=>{
-          const line=document.createElement('div'); line.className='person';
-          const rs=(roles.find(r=>r.id===p.role)||{}).short||'';
-          line.textContent=p.name+' · '+rs+(p.via24?' (24h)':'');
-          card.appendChild(line);
-        });
-      } else {
-        const e=document.createElement('div'); e.className='empty'; e.textContent='—'; card.appendChild(e);
-      }
-
-      const rb=document.createElement('div'); rb.className='roles';
-      roles.forEach(r=>{
-        const b=document.createElement('button'); b.textContent=r.label;
-        if(mine===r.id) b.className='on';
-        b.onclick=()=>setRole(dateISO,slot.id,r.id);
-        rb.appendChild(b);
-      });
-      card.appendChild(rb);
-      row.appendChild(card);
-    });
-    wrap.appendChild(row);
-    return wrap;
-  }
-
-  function render(){
-    // ligne du mois
-    const ml=document.getElementById('monthline');
-    if(state.month){
-      const [y,m]=state.month.split('-').map(Number);
-      const dt=new Date(Date.UTC(y,m-1,1));
-      ml.textContent=dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric',timeZone:'UTC'});
-    } else { ml.textContent='Mois non renseigné.'; }
-
-    const list=document.getElementById('list'); list.innerHTML='';
-    const wes=weekendsOfMonth(state.month);
-    if(!wes.length){
-      const p=document.createElement('p'); p.className='sub';
-      p.textContent='Choisis un mois pour afficher les week-ends.'; list.appendChild(p); return;
-    }
-
-    wes.forEach((we, idx)=>{
-      const key = (we.sat||we.sun);
-      const box=document.createElement('div'); box.className='we'+(openWE[key]?' open':'');
-
-      const head=document.createElement('div'); head.className='we-head';
-      head.onclick=()=>{ openWE[key]=!openWE[key]; render(); };
-
-      const title=document.createElement('div'); title.className='we-title';
-      if(we.sat && we.sun){ title.textContent=fmtShort(we.sat)+' – '+fmtShort(we.sun); }
-      else { title.textContent=fmtShort(we.sun); }
-
-      const sum=document.createElement('div'); sum.className='we-sum';
-      // pastilles résumé : une par jour présent
-      [we.sat, we.sun].filter(Boolean).forEach(dISO=>{
-        const st=daySummary(dISO); const c=C[st];
-        const pill=document.createElement('span'); pill.className='pill';
-        pill.style.background=c.bg; pill.style.color=c.t; pill.style.border='1px solid '+c.b;
-        pill.textContent=fmtShort(dISO).split(' ')[0]+' '+({red:'✕',amber:'~',green:'✓'})[st];
-        sum.appendChild(pill);
-      });
-      const chev=document.createElement('span'); chev.className='chev'; chev.textContent='▶';
-      sum.appendChild(chev);
-
-      head.appendChild(title); head.appendChild(sum);
-      box.appendChild(head);
-
-      const body=document.createElement('div'); body.className='we-body';
-      [we.sat, we.sun].filter(Boolean).forEach(dISO=>{ body.appendChild(buildDay(dISO)); });
-      box.appendChild(body);
-
-      list.appendChild(box);
-    });
-  }
-
-  document.getElementById('name').addEventListener('input',render);
-
-  document.getElementById('setmonth').onclick=()=>{
-    if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
-    const m=document.getElementById('monthpick').value;
-    if(!m){ alert('Choisis un mois'); return; }
-    state.month=m; push();
-  };
-  document.getElementById('clear').onclick=()=>{
-    if(document.getElementById('pw').value!==ADMIN_PASSWORD){ alert('Mot de passe incorrect'); return; }
-    if(!confirm('Vider toutes les réponses du tableau ?')) return;
-    state.dispo={}; push();
-  };
-
-  render();
+render();
+db=true;
+const admBtn=document.getElementById("admBtn"), admForm=document.getElementById("admForm"), admErr=document.getElementById("admErr");
+try{isAdmin=sessionStorage.getItem("gardes-admin")==="1"}catch(e){}
+function syncAdm(){admBtn.textContent=isAdmin?"Quitter l'accès chef de centre":"Accès chef de centre"}
+admBtn.onclick=()=>{
+  if(isAdmin){isAdmin=false; try{sessionStorage.removeItem("gardes-admin")}catch(e){} syncAdm(); render(); return}
+  admForm.hidden=!admForm.hidden; if(!admForm.hidden) document.getElementById("admPwd").focus();
+};
+admForm.addEventListener("submit",e=>{
+  e.preventDefault(); admErr.textContent="";
+  if(document.getElementById("admPwd").value===ADMIN_PASSWORD){
+    isAdmin=true; try{sessionStorage.setItem("gardes-admin","1")}catch(e){}
+    admForm.hidden=true; document.getElementById("admPwd").value=""; syncAdm(); render();
+  } else admErr.textContent="Mot de passe incorrect.";
+});
+syncAdm();
+subscribe();
+onValue(ref(rdb,BASE+"/verif"),snap=>{
+  const v=snap.val()||{}, o={};
+  for(const [k,x] of Object.entries(v)){ if(x&&typeof x==="object") o[k]={a:typeof x.a==="string"?x.a:undefined,b:typeof x.b==="string"?x.b:undefined,c:typeof x.c==="string"?x.c:undefined} }
+  verifOv=o; render();
+},()=>{});
+render();
 </script>
 </body>
 </html>

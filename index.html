@@ -68,6 +68,12 @@ button,select{font:inherit;color:inherit}
 .cell select.mine{background:var(--me)}
 .cell label{display:none;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .lvl{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
+.hrs{display:flex;gap:4px;margin-top:4px}
+.hrs select{flex:1;min-width:0;font-size:12px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--muted)}
+.hrs select.off{color:var(--lvl2);border-color:var(--lvl2);font-weight:600}
+.lvl.multi{flex-direction:column;align-items:flex-end;gap:2px;font-size:11px;white-space:nowrap}
+.seg{display:flex;align-items:center;gap:5px}
+.seg.l0{color:var(--lvl0)}.seg.l2{color:var(--lvl2)}.seg.l3{color:var(--lvl3)}.seg.l4{color:var(--lvl4)}
 .lvl.l0{color:var(--lvl0)}.lvl.l2{color:var(--lvl2)}.lvl.l3{color:var(--lvl3)}.lvl.l4{color:var(--lvl4)}
 @media (max-width:720px){
   .head{display:none}
@@ -159,7 +165,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
         <p class="k" id="quotaTxt"></p>
         <div id="counter"></div>
         <div class="rules">
-          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b></div>
+          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b>. La nuit, indique ton <b>heure d'arrivée</b> (19 h ou 20 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
           <div>Dispo seulement le week-end : <b>1 nuit + 1 journée complète</b> chaque week-end.</div>
           <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un du même poste.</div>
           <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine : Thibaud, David ou Fabrice + deux autres, celui qui en a fait le moins passe en premier. Échange possible.</div>
@@ -270,7 +276,33 @@ function slotsOf([y,m]){
   }
   return out;
 }
+let hor={};   // "slot__post" -> {a:19|20, d:3..7}  (nuits uniquement)
+const ARR=k=>(hor[k]&&hor[k].a)||19, DEP=k=>(hor[k]&&hor[k].d)||7;
+function levelOfV(v){
+  const names=v.filter(Boolean), n=names.length;
+  if(n===4) return 4;
+  const chefV=names.filter(x=>VSAV_CHEFS.includes(x)).length;
+  const driver=!!v[2]||chefV>=2;
+  if(n>=3&&chefV>=1&&driver) return 3;
+  if(n>=2) return 2;
+  return 0;
+}
+/* Nuit : niveau heure par heure (19 h → 7 h) selon l'arrivée et le départ de chacun */
+function nightSegments(sid){
+  const segs=[];
+  for(let t=19;t<31;t++){
+    const v=POSTS.map(p=>{const k=sid+"__"+p.k, n=cells[k]; if(!n) return ""; return (ARR(k)<=t && t<DEP(k)+24)?n:""});
+    const lv=levelOfV(v), last=segs[segs.length-1];
+    if(last&&last.lv===lv) last.to=t+1; else segs.push({from:t,to:t+1,lv});
+  }
+  return segs;
+}
+const hh=t=>((t%24)+"h");
 function level(sid){
+  if(sid.endsWith("_n")) return Math.min(...nightSegments(sid).map(x=>x.lv));
+  return levelOfV(POSTS.map(p=>cells[sid+"__"+p.k]||""));
+}
+function levelOld(sid){
   const v=POSTS.map(p=>cells[sid+"__"+p.k]||"");
   const names=v.filter(Boolean), n=names.length;
   if(n===4) return 4;
@@ -327,10 +359,29 @@ function render(){
         if(inSlot[i]) sel.classList.add("filled");
         if(me&&inSlot[i]===me) sel.classList.add("mine");
         sel.addEventListener("change",()=>save(s.id,p.k,sel.value,s));
-        c.append(lab,sel); row.appendChild(c);
+        c.append(lab,sel);
+        if(inSlot[i]&&s.id.endsWith("_n")){
+          const k=s.id+"__"+p.k, hr=document.createElement("div"); hr.className="hrs";
+          const mk=(label,opts,val,field)=>{
+            const se=document.createElement("select"); se.setAttribute("aria-label",`${label} ${inSlot[i]}`); se.disabled=!canWrite||!db;
+            for(const [v,t] of opts){const o=document.createElement("option");o.value=v;o.textContent=t;se.appendChild(o)}
+            se.value=String(val); if(String(val)!==String(opts[0][0])) se.classList.add("off");
+            se.addEventListener("change",()=>saveHor(k,field,Number(se.value)));
+            return se;
+          };
+          hr.append(mk("Arrivée",[[19,"19h"],[20,"20h"]],ARR(k),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(k),"d"));
+          c.appendChild(hr);
+        }
+        row.appendChild(c);
       });
       const l=document.createElement("div"); l.className="lvl l"+lv;
-      const dot=document.createElement("span"); dot.className="dot l"+lv; l.append(dot,document.createTextNode(LVL[lv]));
+      const segs=s.id.endsWith("_n")?nightSegments(s.id):null;
+      if(segs&&segs.length>1){
+        l.classList.add("multi");
+        for(const g of segs){const ln=document.createElement("span");ln.className="seg l"+g.lv;const d=document.createElement("span");d.className="dot l"+g.lv;ln.append(d,document.createTextNode(`${hh(g.from)}–${hh(g.to)} ${LVL[g.lv]}`));l.appendChild(ln)}
+      } else {
+        const dot=document.createElement("span"); dot.className="dot l"+lv; l.append(dot,document.createTextNode(LVL[lv]));
+      }
       row.appendChild(l); box.appendChild(row);
     }
     if(shown){box.prepend(dn); roster.appendChild(box)}
@@ -404,14 +455,14 @@ function renderCounter(days,nSlots){
   group("Conducteurs VSAV et équipiers",OTHERS,qO,qOs,qOw);
   renderBilan();
 }
-function slotHours(sid){return sid.endsWith("_n")?12:6}
+function slotHours(sid,k){return sid.endsWith("_n")?(k?(DEP(k)+24-ARR(k)):12):6}
 function bilanData(){
   const mk=mkey(cur), today=new Date(); today.setHours(0,0,0,0);
   const inPeriod=ds=>bilanMode==="mois"?ds.startsWith(mk):true;
   const rows={}; [...QUALIF,...OTHERS].forEach(n=>rows[n]={c:0,h:0,v:0});
   for(const [k,n] of Object.entries(cells)){
     const sid=k.split("__")[0], ds=sid.slice(0,10);
-    if(!inPeriod(ds)||!rows[n]) continue; rows[n].c++; rows[n].h+=slotHours(sid);
+    if(!inPeriod(ds)||!rows[n]) continue; rows[n].c++; rows[n].h+=slotHours(sid,k);
   }
   for(const v of Object.values(VERIF)){
     if(v.mon>today) continue;
@@ -442,14 +493,23 @@ async function save(sid,post,name,s){
   const r=ref(rdb,BASE+"/gardes/"+sid+"__"+post);
   const prev=cells[sid+"__"+post];
   if(name) cells[sid+"__"+post]=name; else delete cells[sid+"__"+post];
+  const hk=sid+"__"+post, hadHor=!!hor[hk]; if(hadHor) delete hor[hk];
   render();
   try{
     await set(r,name||null);
+    if(hadHor) await set(ref(rdb,BASE+"/horaires/"+hk),null);
   }catch(e){
     if(prev) cells[sid+"__"+post]=prev; else delete cells[sid+"__"+post];
     showNote("L'inscription n'a pas été enregistrée. Réessaie dans un instant.");
     render();
   }
+}
+async function saveHor(k,field,val){
+  const prev=hor[k]; const nv={a:ARR(k),d:DEP(k),[field]:val};
+  const isDef=nv.a===19&&nv.d===7;
+  if(isDef) delete hor[k]; else hor[k]=nv; render();
+  try{await set(ref(rdb,BASE+"/horaires/"+k),isDef?null:nv)}
+  catch(e){ if(prev) hor[k]=prev; else delete hor[k]; showNote("L'horaire n'a pas été enregistré. Réessaie dans un instant."); render()}
 }
 function showNote(t){const n=document.getElementById("note"); n.textContent=t; n.hidden=!t}
 
@@ -500,6 +560,15 @@ admForm.addEventListener("submit",e=>{
 });
 syncAdm();
 subscribe();
+onValue(ref(rdb,BASE+"/horaires"),snap=>{
+  const v=snap.val()||{}, o={};
+  for(const [k,x] of Object.entries(v)){
+    if(!x||typeof x!=="object"||!/_n__(chef|ccr|vsav|eq)$/.test(k)) continue;
+    const a=[19,20].includes(Number(x.a))?Number(x.a):19, d=[3,4,5,6,7].includes(Number(x.d))?Number(x.d):7;
+    o[k]={a,d};
+  }
+  hor=o; render();
+},()=>{});
 onValue(ref(rdb,BASE+"/verif"),snap=>{
   const v=snap.val()||{}, o={};
   for(const [k,x] of Object.entries(v)){ if(x&&typeof x==="object") o[k]={a:typeof x.a==="string"?x.a:undefined,b:typeof x.b==="string"?x.b:undefined,c:typeof x.c==="string"?x.c:undefined} }

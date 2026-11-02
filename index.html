@@ -165,7 +165,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
         <p class="k" id="quotaTxt"></p>
         <div id="counter"></div>
         <div class="rules">
-          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b>. La nuit, indique ton <b>heure d'arrivée</b> (19 h ou 20 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
+          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b>. La nuit, indique ton <b>heure d'arrivée</b> (19 h, 20 h ou 21 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
           <div>Dispo seulement le week-end : <b>1 nuit + 1 journée complète</b> chaque week-end.</div>
           <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un du même poste.</div>
           <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine : Thibaud, David ou Fabrice + deux autres, celui qui en a fait le moins passe en premier. Échange possible.</div>
@@ -369,7 +369,7 @@ function render(){
             se.addEventListener("change",()=>saveHor(k,field,Number(se.value)));
             return se;
           };
-          hr.append(mk("Arrivée",[[19,"19h"],[20,"20h"]],ARR(k),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(k),"d"));
+          hr.append(mk("Arrivée",[[19,"19h"],[20,"20h"],[21,"21h"]],ARR(k),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(k),"d"));
           c.appendChild(hr);
         }
         row.appendChild(c);
@@ -564,7 +564,7 @@ onValue(ref(rdb,BASE+"/horaires"),snap=>{
   const v=snap.val()||{}, o={};
   for(const [k,x] of Object.entries(v)){
     if(!x||typeof x!=="object"||!/_n__(chef|ccr|vsav|eq)$/.test(k)) continue;
-    const a=[19,20].includes(Number(x.a))?Number(x.a):19, d=[3,4,5,6,7].includes(Number(x.d))?Number(x.d):7;
+    const a=[19,20,21].includes(Number(x.a))?Number(x.a):19, d=[3,4,5,6,7].includes(Number(x.d))?Number(x.d):7;
     o[k]={a,d};
   }
   hor=o; render();

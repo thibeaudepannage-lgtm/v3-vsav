@@ -77,7 +77,7 @@ button,select{font:inherit;color:inherit}
 }
 /* counter */
 aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
-@media (max-width:900px){aside{position:static}}
+@media (max-width:900px){aside{position:static;order:-1}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
 .card h2{font-family:var(--display);font-size:22px;margin:0 0 2px}
 .card p.k{color:var(--muted);font-size:13px;margin:0 0 10px}
@@ -162,7 +162,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
           <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b></div>
           <div>Dispo seulement le week-end : <b>1 nuit + 1 journée complète</b> chaque week-end.</div>
           <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un du même poste.</div>
-          <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine (un qualifié + deux autres), celui qui en a fait le moins passe en premier. Échange possible.</div>
+          <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine : Thibaud, David ou Fabrice + deux autres, celui qui en a fait le moins passe en premier. Échange possible.</div>
           <div id="myVerif"></div>
         </div>
       </div>
@@ -213,7 +213,7 @@ let cur=[2026,10];
 let cells={};           // key "slot__post" -> name
 let verifOv={};         // mondayISO -> {a,b} overrides
 const ROT0=new Date(2026,10,2); // lundi 2 nov. 2026 = semaine 0 du tour de rôle
-const ROT_A=["Thibaud","David","Fabrice","Jérôme"];
+const ROT_A=["Thibaud","David","Fabrice"]; // vérif : un chef parmi eux (Jérôme retiré pour le moment)
 const ROT_B=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"]; // choix possibles
 const ROT_B_FALLBACK=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];     // tour de rôle si personne n'est inscrit (sans Cassandre)
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -240,7 +240,7 @@ function computeVerifs(){
     const k=iso(mon), o=verifOv[k]||{};
     const [a0,ma]=pick(ROT_A.filter(n=>present.has(n)),ROT_A,null);
     const a=o.a||a0;
-    const poolB=[...present].filter(n=>!ROT_A.includes(n));
+    const poolB=[...present].filter(n=>ROT_B.includes(n));
     const [b0,mb]=pick(poolB,ROT_B_FALLBACK,a);
     const b=o.b||b0;
     const [c0,mc]=pick(poolB.filter(n=>n!==b),ROT_B_FALLBACK.filter(n=>n!==b),a);
@@ -352,7 +352,7 @@ function verifBand(v,mon,sun){
   const t=document.createElement("span"); t.className="vt"; t.textContent="Vérif de la semaine";
   const w=document.createElement("span"); w.className="vw"; w.textContent=`du ${pad(mon.getDate())}/${pad(mon.getMonth()+1)} au ${pad(sun.getDate())}/${pad(sun.getMonth()+1)}`;
   b.append(t,w);
-  for(const [f,list,lab] of [["a",ROT_A,"Qualifié"],["b",ROT_B,"Équipier 1"],["c",ROT_B,"Équipier 2"]]){
+  for(const [f,list,lab] of [["a",ROT_A,"Chef"],["b",ROT_B,"Équipier 1"],["c",ROT_B,"Équipier 2"]]){
     const s=document.createElement("select"); s.id=`verif-${v.k}-${f}`; s.setAttribute("aria-label",`${lab} vérif semaine du ${v.k}`);
     s.disabled=!canWrite||!db;
     for(const n of list){const o=document.createElement("option");o.value=n;o.textContent=n;s.appendChild(o)}

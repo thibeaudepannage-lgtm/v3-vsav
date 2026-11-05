@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-/* Layout: sticky toolbar + day-grouped roster rows (4 posts per slot) + right-hand counter on wide screens */
+/* Layout: sticky toolbar + day-grouped roster rows (names per slot, auto-assigned posts) + right-hand counter on wide screens */
 :root{
   --bg:#f6f7f9; --panel:#ffffff; --ink:#1b2230; --muted:#5d6676; --line:#dfe3ea;
   --red:#c8102e; --red-soft:#fbe9ec; --we:#fdf3f2; --fer:#fff6dc;
@@ -53,7 +53,7 @@ button,select{font:inherit;color:inherit}
 .note{background:var(--red-soft);border-radius:8px;padding:10px 12px;font-size:14px;margin-top:12px}
 .note[hidden]{display:none}
 /* roster */
-.head,.slot{display:grid;grid-template-columns:118px repeat(4,minmax(0,1fr)) 110px;gap:6px;align-items:center}
+.head,.slot{display:grid;grid-template-columns:96px minmax(0,1fr) 190px;gap:10px;align-items:start}
 .head{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 8px}
 .head small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
 .day{margin-top:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
@@ -63,23 +63,29 @@ button,select{font:inherit;color:inherit}
 .slot{padding:6px 8px;border-top:1px solid transparent}
 .slot+.slot{border-top-color:var(--line)}
 .when b{display:block;font-size:14px}.when span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.cell select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 6px;font-size:14px;min-width:0}
-.cell select.filled{border-color:var(--ink);font-weight:600}
-.cell select.mine{background:var(--me)}
-.cell label{display:none;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-.lvl{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
-.hrs{display:flex;gap:4px;margin-top:4px}
-.hrs select{flex:1;min-width:0;font-size:12px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--muted)}
-.hrs select.off{color:var(--lvl2);border-color:var(--lvl2);font-weight:600}
-.lvl.multi{flex-direction:column;align-items:flex-end;gap:2px;font-size:11px;white-space:nowrap}
-.seg{display:flex;align-items:center;gap:5px}
+.who{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.pp{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ink);border-radius:8px;padding:3px 4px 3px 9px;background:var(--panel);font-size:14px}
+.pp.mine{background:var(--me)}
+.pp b{font-weight:600}
+.pp select{font-size:12px;padding:2px 3px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--muted)}
+.pp select.off{color:var(--lvl2);border-color:var(--lvl2);font-weight:600}
+.rm{border:0;background:none;color:var(--muted);font-size:17px;line-height:1;padding:2px 6px;cursor:pointer;border-radius:6px}
+.rm:hover{color:var(--red);background:var(--red-soft)}
+.rm:focus-visible,.pp select:focus-visible,.add:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.add{background:var(--panel);border:1px dashed var(--muted);border-radius:8px;padding:5px 6px;font-size:14px;color:var(--muted);max-width:150px}
+.addme{padding:4px 10px;font-weight:600;border-style:dashed}
+.team{flex-basis:100%;font-size:12px;color:var(--muted)}
+.lvl{font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.lvl .hint{font-weight:400;font-size:11px;color:var(--muted);max-width:190px}
+.lvl.multi{font-size:11px}
+.seg{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .seg.l0{color:var(--lvl0)}.seg.l2{color:var(--lvl2)}.seg.l3{color:var(--lvl3)}.seg.l4{color:var(--lvl4)}
 .lvl.l0{color:var(--lvl0)}.lvl.l2{color:var(--lvl2)}.lvl.l3{color:var(--lvl3)}.lvl.l4{color:var(--lvl4)}
 @media (max-width:720px){
   .head{display:none}
-  .slot{grid-template-columns:1fr 1fr;row-gap:8px}
-  .when{grid-column:1}.lvl{grid-column:2;justify-content:flex-end}
-  .cell label{display:block}
+  .slot{grid-template-columns:1fr auto;row-gap:8px}
+  .when{grid-column:1;grid-row:1}.lvl{grid-column:2;grid-row:1}
+  .who{grid-column:1/-1;grid-row:2}
 }
 /* counter */
 aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
@@ -127,7 +133,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
   <header class="top">
     <div>
       <h1>Gardes <span>Épieds</span></h1>
-      <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · choisis ton nom sur un poste</div>
+      <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · inscris-toi, l'appli répartit les postes</div>
     </div>
     <div class="adm"><button class="btn" id="admBtn">Accès chef de centre</button>
       <form id="admForm" hidden><input id="admPwd" type="password" placeholder="Mot de passe" autocomplete="current-password" required><button class="btn" type="submit">Se connecter</button><span id="admErr" class="err"></span></form>
@@ -152,22 +158,16 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
   <div class="layout">
     <main>
       <div class="head"><span>Créneau</span>
-        <span>Chef d'agrès<small>Thibaud · David · Fabrice · Jérôme (CCR)</small></span>
-        <span>Conducteur CCR<small>Thibaud · David · Fabrice · Jérôme</small></span>
-        <span>Conducteur VSAV<small>Baptiste · Bertrand · Coralie · un chef</small></span>
-        <span>Équipier<small>Tout le monde</small></span>
+        <span>Inscrits<small>Inscris-toi, l'appli répartit les postes selon les qualifs de chacun</small></span>
         <span style="text-align:right">Départ possible</span></div>
       <div id="roster"></div>
     </main>
     <aside>
       <div class="card">
-        <h2>Compteur du mois</h2>
-        <p class="k" id="quotaTxt"></p>
-        <div id="counter"></div>
+        <h2>Bon à savoir</h2>
         <div class="rules">
-          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b>. La nuit, indique ton <b>heure d'arrivée</b> (19 h, 20 h ou 21 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
-          <div>Dispo seulement le week-end : <b>1 nuit + 1 journée complète</b> chaque week-end.</div>
-          <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un du même poste.</div>
+          <div>Inscris-toi quand tu es dispo, autant que tu peux. La nuit, indique ton <b>heure d'arrivée</b> (19 h, 20 h ou 21 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
+          <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un qui a la même qualif.</div>
           <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine : Thibaud, David ou Fabrice + deux autres, celui qui en a fait le moins passe en premier. Échange possible.</div>
           <div id="myVerif"></div>
         </div>
@@ -186,7 +186,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 /* ===== CONFIG FIREBASE (ton projet garde-vsav) ===== */
 const firebaseConfig = {
@@ -203,33 +203,39 @@ const ADMIN_PASSWORD = "caserne45";   // accès chef de centre (le même qu'avan
 const app=initializeApp(firebaseConfig), rdb=getDatabase(app);
 const BASE="planning";
 
+/* ===== QUALIFS : l'appli répartit les postes toute seule ===== */
 const QUALIF=["Thibaud","David","Fabrice","Jérôme"];
 const OTHERS=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];
-const VSAV_CHEFS=["Thibaud","David","Fabrice"];
-const POSTS=[
-  {k:"chef",label:"Chef d'agrès",who:["Thibaud","David","Fabrice","Jérôme"]},
-  {k:"ccr",label:"Conducteur CCR",who:["Thibaud","David","Fabrice","Jérôme"]},
-  {k:"vsav",label:"Conducteur VSAV",who:["Baptiste","Bertrand","Coralie","Thibaud","David","Fabrice"]},
-  {k:"eq",label:"Équipier",who:[...QUALIF,...OTHERS]}
-];
+const ALL=[...QUALIF,...OTHERS];
+const VSAV_CHEFS=["Thibaud","David","Fabrice"];                         // chef d'agrès VSAV
+const VSAV_DRIVERS=["Baptiste","Bertrand","Coralie","Thibaud","David","Fabrice"]; // conducteur VSAV
+const NO_VSAV=["Jérôme"];                                              // ne monte pas dans le VSAV
+const CCR_CHEFS=["Thibaud","Fabrice","Jérôme"];                         // chef d'agrès CCR
+const CCR_DRIVERS=["Thibaud","Fabrice","Jérôme","David"];               // conducteur CCR
+
 const FERIES=new Set(["2026-11-11","2026-12-25","2027-01-01","2027-03-29","2027-05-01","2027-05-06","2027-05-08","2027-05-17","2027-07-14","2027-08-15","2027-11-01","2027-11-11","2027-12-25"]);
 const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
 const FIRST=[2026,10], LAST=[2027,11];
 let cur=[2026,10];
-let cells={};           // key "slot__post" -> name
-let verifOv={};         // mondayISO -> {a,b} overrides
+let dbIns={}, legacyIns={}, ins={};   // slotId -> {nom: {a,d}}
+let verifOv={};         // mondayISO -> {a,b,c} overrides
 const ROT0=new Date(2026,10,2); // lundi 2 nov. 2026 = semaine 0 du tour de rôle
-const ROT_A=["Thibaud","David","Fabrice"]; // vérif : un chef parmi eux (Jérôme retiré pour le moment)
-const ROT_B=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"]; // choix possibles
-const ROT_B_FALLBACK=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];     // tour de rôle si personne n'est inscrit (sans Cassandre)
+const ROT_A=["Thibaud","David","Fabrice"]; // vérif : un chef parmi eux
+const ROT_B=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];
+const ROT_B_FALLBACK=ROT_B;
+const pad=n=>String(n).padStart(2,"0");
+const mkey=([y,m])=>`${y}-${pad(m+1)}`;
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const SLOT_RE=/^\d{4}-\d{2}-\d{2}_[man]$/;
 function mondayOf(ds){const [y,m,d]=ds.split("-").map(Number); const x=new Date(y,m-1,d); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return x}
-let VERIF={};   // mondayISO -> {k,a,b,mode}
-/* Vérif : parmi les inscrits de la semaine, celui qui a fait le moins de vérifs depuis le début ;
-   un qualifié + un autre ; si personne d'inscrit, tour de rôle fixe ; un échange manuel l'emporte. */
+const namesIn=sid=>ALL.filter(n=>ins[sid]&&ins[sid][n]);
+const ARR=(sid,n)=>(ins[sid]&&ins[sid][n]&&ins[sid][n].a)||19;
+const DEP=(sid,n)=>(ins[sid]&&ins[sid][n]&&ins[sid][n].d)||7;
+
+let VERIF={};
 function computeVerifs(){
   const byDate={};
-  for(const [k,n] of Object.entries(cells)){const ds=k.slice(0,10); (byDate[ds]=byDate[ds]||new Set()).add(n)}
+  for(const sid of Object.keys(ins)){const ds=sid.slice(0,10); for(const n of namesIn(sid)) (byDate[ds]=byDate[ds]||new Set()).add(n)}
   const count={}; VERIF={};
   const end=new Date(LAST[0],LAST[1]+1,0);
   for(let mon=new Date(ROT0.getTime()-7*864e5), i=-1; mon<=end; mon.setDate(mon.getDate()+7), i++){
@@ -258,11 +264,9 @@ function computeVerifs(){
 }
 function verifFor(mon){return VERIF[iso(mon)]||{k:iso(mon),a:ROT_A[0],b:ROT_B_FALLBACK[0],c:ROT_B_FALLBACK[1],mode:"tour"}}
 let isAdmin=false, bilanMode="mois";
-let db=null, unsub=null, canWrite=true, loadTimer=null, onlyGaps=false;
+let db=null, canWrite=true, loadTimer=null, onlyGaps=false;
 let me=""; try{me=localStorage.getItem("gardes-me")||""}catch(e){}
 
-const pad=n=>String(n).padStart(2,"0");
-const mkey=([y,m])=>`${y}-${pad(m+1)}`;
 function slotsOf([y,m]){
   const out=[]; const d=new Date(y,m,1);
   while(d.getMonth()===m){
@@ -270,49 +274,81 @@ function slotsOf([y,m]){
     const fer=FERIES.has(ds), we=wd===0||wd===6;
     const day={ds,wd,fer,we,slots:[]};
     if(we||fer){
-      day.slots.push({id:ds+"_m",c:"Matin",h:"7h → 13h",hrs:6},{id:ds+"_a",c:"Après-midi",h:"13h → 19h",hrs:6},{id:ds+"_n",c:"Nuit",h:"19h → 7h",hrs:12});
-    } else day.slots.push({id:ds+"_n",c:"Nuit",h:"19h → 7h",hrs:12});
+      day.slots.push({id:ds+"_m",c:"Matin",h:"7h → 13h"},{id:ds+"_a",c:"Après-midi",h:"13h → 19h"},{id:ds+"_n",c:"Nuit",h:"19h → 7h"});
+    } else day.slots.push({id:ds+"_n",c:"Nuit",h:"19h → 7h"});
     out.push(day); d.setDate(d.getDate()+1);
   }
   return out;
 }
-let hor={};   // "slot__post" -> {a:19|20, d:3..7}  (nuits uniquement)
-const ARR=k=>(hor[k]&&hor[k].a)||19, DEP=k=>(hor[k]&&hor[k].d)||7;
-function levelOfV(v){
-  const names=v.filter(Boolean), n=names.length;
-  if(n===4) return 4;
-  const chefV=names.filter(x=>VSAV_CHEFS.includes(x)).length;
-  const driver=!!v[2]||chefV>=2;
-  if(n>=3&&chefV>=1&&driver) return 3;
-  if(n>=2) return 2;
-  return 0;
+
+/* ===== Répartition automatique ===== */
+// équipiers : on met d'abord ceux qui n'ont pas d'autre qualif
+const eqOrder=names=>[...names].sort((x,y)=>(VSAV_CHEFS.includes(x)+CCR_DRIVERS.includes(x)+VSAV_DRIVERS.includes(x))-(VSAV_CHEFS.includes(y)+CCR_DRIVERS.includes(y)+VSAV_DRIVERS.includes(y)));
+function vsavTeams(names){
+  const out=[], eqs=eqOrder(names);
+  for(const c of names) if(VSAV_CHEFS.includes(c))
+    for(const d of eqOrder(names)) if(d!==c&&VSAV_DRIVERS.includes(d))
+      for(const e of eqs) if(e!==c&&e!==d&&!NO_VSAV.includes(e)) out.push([c,d,e]);
+  return out;
 }
-/* Nuit : niveau heure par heure (19 h → 7 h) selon l'arrivée et le départ de chacun */
+function ccrTeam(names){
+  for(const c of names) if(CCR_CHEFS.includes(c))
+    for(const d of names) if(d!==c&&CCR_DRIVERS.includes(d)){
+      const rest=eqOrder(names.filter(x=>x!==c&&x!==d));
+      if(rest.length>=2) return [c,d,rest[0],rest[1]];
+    }
+  return null;
+}
+function missVSAV(names){
+  if(!names.some(n=>VSAV_CHEFS.includes(n))) return "un chef d'agrès VSAV";
+  if(!names.some(c=>VSAV_CHEFS.includes(c)&&names.some(d=>d!==c&&VSAV_DRIVERS.includes(d)))) return "un conducteur VSAV";
+  return "un équipier";
+}
+function missCCR(names){
+  if(!names.some(n=>CCR_CHEFS.includes(n))) return "un chef d'agrès CCR";
+  if(!names.some(c=>CCR_CHEFS.includes(c)&&names.some(d=>d!==c&&CCR_DRIVERS.includes(d)))) return "un conducteur CCR";
+  const need=Math.max(1,4-names.length); return need>1?`${need} équipiers`:"un équipier";
+}
+/* niveaux : 0 rien · 1 prompt secours · 2 CCR mais pas d'ambulance · 3 ambulance · 4 ambulance ou CCR · 5 ambulance + CCR en même temps */
+const LVL={0:"Rien ne part",1:"Prompt secours",2:"CCR, pas d'ambulance",3:"Ambulance",4:"Ambulance ou CCR",5:"Ambulance + CCR"};
+const CLS={0:"l0",1:"l2",2:"l2",3:"l3",4:"l4",5:"l4"};
+function analyze(list){
+  const names=ALL.filter(n=>list.includes(n));
+  const vt=vsavTeams(names);
+  for(const t of vt){const c=ccrTeam(names.filter(x=>!t.includes(x))); if(c) return {lv:5,names,vsav:t,ccr:c,hint:""}}
+  const c=ccrTeam(names);
+  if(vt.length&&c) return {lv:4,names,vsav:vt[0],ccr:c,hint:"Les deux en même temps : il manque du monde"};
+  if(vt.length) return {lv:3,names,vsav:vt[0],hint:"Pour le CCR : il manque "+missCCR(names)};
+  if(c) return {lv:2,names,ccr:c,hint:"Pour l'ambulance : il manque "+missVSAV(names)};
+  return {lv:names.length>=2?1:0,names,hint:names.length?"Pour l'ambulance : il manque "+missVSAV(names):""};
+}
+/* Nuit : heure par heure (19 h → 7 h) selon l'arrivée et le départ de chacun */
 function nightSegments(sid){
-  const segs=[];
+  const segs=[], all=namesIn(sid);
   for(let t=19;t<31;t++){
-    const v=POSTS.map(p=>{const k=sid+"__"+p.k, n=cells[k]; if(!n) return ""; return (ARR(k)<=t && t<DEP(k)+24)?n:""});
-    const lv=levelOfV(v), last=segs[segs.length-1];
-    if(last&&last.lv===lv) last.to=t+1; else segs.push({from:t,to:t+1,lv});
+    const here=all.filter(n=>ARR(sid,n)<=t&&t<DEP(sid,n)+24);
+    const r=analyze(here), last=segs[segs.length-1];
+    if(last&&last.lv===r.lv) last.to=t+1; else segs.push({from:t,to:t+1,lv:r.lv,r});
   }
   return segs;
 }
 const hh=t=>((t%24)+"h");
-function level(sid){
-  if(sid.endsWith("_n")) return Math.min(...nightSegments(sid).map(x=>x.lv));
-  return levelOfV(POSTS.map(p=>cells[sid+"__"+p.k]||""));
+function slotInfo(sid){
+  if(sid.endsWith("_n")){
+    const segs=nightSegments(sid);
+    let worst=segs[0]; for(const g of segs) if(g.lv<worst.lv) worst=g;
+    const full=analyze(namesIn(sid));
+    return {lv:worst.lv,segs,r:worst.r,full};
+  }
+  const r=analyze(namesIn(sid)); return {lv:r.lv,segs:null,r,full:r};
 }
-function levelOld(sid){
-  const v=POSTS.map(p=>cells[sid+"__"+p.k]||"");
-  const names=v.filter(Boolean), n=names.length;
-  if(n===4) return 4;
-  const chefV=names.filter(x=>VSAV_CHEFS.includes(x)).length;
-  const driver=!!v[2]||chefV>=2;
-  if(n>=3&&chefV>=1&&driver) return 3;
-  if(n>=2) return 2;
-  return 0;
+function teamText(r){
+  const p=[];
+  if(r.vsav) p.push(`VSAV : ${r.vsav[0]} chef · ${r.vsav[1]} conducteur · ${r.vsav[2]}`);
+  if(r.ccr&&(r.lv===5||r.lv===2||(r.lv===4&&!r.vsav))) p.push(`CCR : ${r.ccr[0]} chef · ${r.ccr[1]} conducteur · ${r.ccr[2]} · ${r.ccr[3]}`);
+  else if(r.ccr&&r.lv===4) p.push(`ou CCR : ${r.ccr[0]} chef · ${r.ccr[1]} conducteur · ${r.ccr[2]} · ${r.ccr[3]}`);
+  return p.join("  —  ");
 }
-const LVL={0:"Rien ne part",2:"Prompt secours",3:"Ambulance",4:"CCR armé"};
 
 function render(){
   document.getElementById("mlabel").textContent=new Date(cur[0],cur[1],1).toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
@@ -320,7 +356,7 @@ function render(){
   document.getElementById("next").disabled=cur[0]===LAST[0]&&cur[1]===LAST[1];
   computeVerifs();
   const days=slotsOf(cur), roster=document.getElementById("roster"); roster.textContent="";
-  const tally={0:0,2:0,3:0,4:0}; let nSlots=0;
+  const tally={0:0,1:0,2:0,3:0,4:0,5:0}; let nSlots=0;
   const myV=[];
   for(const day of days){
     if(day.wd===1||day.ds.endsWith("-01")){
@@ -337,67 +373,82 @@ function render(){
     if(day.fer){const e=document.createElement("em");e.textContent="férié";dn.appendChild(e)}
     let shown=0;
     for(const s of day.slots){
-      nSlots++; const lv=level(s.id); tally[lv]++;
-      if(onlyGaps&&lv===4) continue;
+      nSlots++; const info=slotInfo(s.id), lv=info.lv; tally[lv]++;
+      if(onlyGaps&&lv>=3) continue;
       shown++;
-      const row=document.createElement("div"); row.className="slot";
-      const w=document.createElement("div"); w.className="when";
-      const wb=document.createElement("b"); wb.textContent=s.c; const ws=document.createElement("span"); ws.textContent=s.h;
-      w.append(wb,ws); row.appendChild(w);
-      const inSlot=POSTS.map(p=>cells[s.id+"__"+p.k]||"");
-      POSTS.forEach((p,i)=>{
-        const c=document.createElement("div"); c.className="cell";
-        const lab=document.createElement("label"); const sid=`sel-${s.id}-${p.k}`; lab.htmlFor=sid; lab.textContent=p.label;
-        const sel=document.createElement("select"); sel.id=sid; sel.disabled=!canWrite||!db;
-        const o0=document.createElement("option"); o0.value=""; o0.textContent="—"; sel.appendChild(o0);
-        for(const n of p.who){
-          const o=document.createElement("option"); o.value=n; o.textContent=n;
-          if(inSlot.includes(n)&&inSlot[i]!==n) o.disabled=true;
-          sel.appendChild(o);
-        }
-        sel.value=inSlot[i];
-        if(inSlot[i]) sel.classList.add("filled");
-        if(me&&inSlot[i]===me) sel.classList.add("mine");
-        sel.addEventListener("change",()=>save(s.id,p.k,sel.value,s));
-        c.append(lab,sel);
-        if(inSlot[i]&&s.id.endsWith("_n")){
-          const k=s.id+"__"+p.k, hr=document.createElement("div"); hr.className="hrs";
-          const mk=(label,opts,val,field)=>{
-            const se=document.createElement("select"); se.setAttribute("aria-label",`${label} ${inSlot[i]}`); se.disabled=!canWrite||!db;
-            for(const [v,t] of opts){const o=document.createElement("option");o.value=v;o.textContent=t;se.appendChild(o)}
-            se.value=String(val); if(String(val)!==String(opts[0][0])) se.classList.add("off");
-            se.addEventListener("change",()=>saveHor(k,field,Number(se.value)));
-            return se;
-          };
-          hr.append(mk("Arrivée",[[19,"19h"],[20,"20h"],[21,"21h"]],ARR(k),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(k),"d"));
-          c.appendChild(hr);
-        }
-        row.appendChild(c);
-      });
-      const l=document.createElement("div"); l.className="lvl l"+lv;
-      const segs=s.id.endsWith("_n")?nightSegments(s.id):null;
-      if(segs&&segs.length>1){
-        l.classList.add("multi");
-        for(const g of segs){const ln=document.createElement("span");ln.className="seg l"+g.lv;const d=document.createElement("span");d.className="dot l"+g.lv;ln.append(d,document.createTextNode(`${hh(g.from)}–${hh(g.to)} ${LVL[g.lv]}`));l.appendChild(ln)}
-      } else {
-        const dot=document.createElement("span"); dot.className="dot l"+lv; l.append(dot,document.createTextNode(LVL[lv]));
-      }
-      row.appendChild(l); box.appendChild(row);
+      box.appendChild(slotRow(s,info));
     }
     if(shown){box.prepend(dn); roster.appendChild(box)}
   }
-  if(onlyGaps&&!roster.childElementCount){const p=document.createElement("p");p.className="empty";p.textContent="Tous les créneaux du mois sont armés à 4.";roster.appendChild(p)}
+  if(onlyGaps&&!roster.childElementCount){const p=document.createElement("p");p.className="empty";p.textContent="Une ambulance peut partir sur tous les créneaux du mois.";roster.appendChild(p)}
   const sm=document.getElementById("summary"); sm.textContent="";
-  for(const [lv,txt] of [[4,"CCR armé"],[3,"Ambulance"],[2,"Prompt secours"],[0,"Rien ne part"]]){
-    const c=document.createElement("span"); c.className="chip l"+lv;
+  for(const lv of [5,4,3,2,1,0]){
+    if((lv===2||lv===5)&&!tally[lv]) continue;
+    const c=document.createElement("span"); c.className="chip "+CLS[lv];
     const d=document.createElement("span"); d.className="dot";
-    c.append(d,document.createTextNode(`${tally[lv]} · ${txt}`)); sm.appendChild(c);
+    c.append(d,document.createTextNode(`${tally[lv]} · ${LVL[lv]}`)); sm.appendChild(c);
   }
   const t=document.createElement("span"); t.className="chip"; t.textContent=`${nSlots} créneaux dans le mois`; sm.appendChild(t);
   renderCounter(days,nSlots);
   const mv=document.getElementById("myVerif");
   mv.textContent=me?(myV.length?`${me}, ta vérif ce mois : ${myV.join(", ")}.`:`${me}, pas de vérif pour toi ce mois-ci.`):"";
 }
+
+function slotRow(s,info){
+  const row=document.createElement("div"); row.className="slot";
+  const w=document.createElement("div"); w.className="when";
+  const wb=document.createElement("b"); wb.textContent=s.c; const ws=document.createElement("span"); ws.textContent=s.h;
+  w.append(wb,ws); row.appendChild(w);
+  const who=document.createElement("div"); who.className="who";
+  const names=namesIn(s.id), night=s.id.endsWith("_n");
+  for(const n of names){
+    const p=document.createElement("span"); p.className="pp"+(n===me?" mine":"");
+    const b=document.createElement("b"); b.textContent=n; p.appendChild(b);
+    if(night){
+      const mk=(label,opts,val,field)=>{
+        const se=document.createElement("select"); se.setAttribute("aria-label",`${label} ${n}`); se.disabled=!canWrite||!db;
+        for(const [v,t] of opts){const o=document.createElement("option");o.value=v;o.textContent=t;se.appendChild(o)}
+        se.value=String(val); if(String(val)!==String(opts[0][0])) se.classList.add("off");
+        se.addEventListener("change",()=>saveHor(s.id,n,field,Number(se.value)));
+        return se;
+      };
+      p.append(mk("Arrivée",[[19,"19h"],[20,"20h"],[21,"21h"]],ARR(s.id,n),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(s.id,n),"d"));
+    }
+    const x=document.createElement("button"); x.className="rm"; x.type="button"; x.textContent="×"; x.disabled=!canWrite||!db;
+    x.setAttribute("aria-label",`Retirer ${n} du créneau`); x.title="Retirer";
+    x.addEventListener("click",()=>removeName(s.id,n));
+    p.appendChild(x); who.appendChild(p);
+  }
+  if(me&&!names.includes(me)){
+    const bm=document.createElement("button"); bm.type="button"; bm.className="btn addme"; bm.textContent="+ Moi"; bm.disabled=!canWrite||!db;
+    bm.setAttribute("aria-label",`M'inscrire, ${me}`);
+    bm.addEventListener("click",()=>addName(s.id,me)); who.appendChild(bm);
+  }
+  const free=ALL.filter(n=>!names.includes(n)&&n!==me);
+  if(free.length){
+    const sel=document.createElement("select"); sel.className="add"; sel.disabled=!canWrite||!db;
+    sel.setAttribute("aria-label",`Ajouter quelqu'un : ${s.c} ${s.id.slice(0,10)}`);
+    const o0=document.createElement("option"); o0.value=""; o0.textContent=me?"+ quelqu'un":"+ Ajouter"; sel.appendChild(o0);
+    for(const n of free){const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)}
+    sel.addEventListener("change",()=>{if(sel.value) addName(s.id,sel.value)});
+    who.appendChild(sel);
+  }
+  const tt=teamText(info.full);
+  if(tt){const r=document.createElement("small"); r.className="team"; r.textContent=tt; who.appendChild(r)}
+  row.appendChild(who);
+  const l=document.createElement("div"); l.className="lvl "+CLS[info.lv];
+  if(info.segs&&info.segs.length>1){
+    l.classList.add("multi");
+    for(const g of info.segs){const ln=document.createElement("span");ln.className="seg "+CLS[g.lv];const d=document.createElement("span");d.className="dot "+CLS[g.lv];ln.append(d,document.createTextNode(`${hh(g.from)}–${hh(g.to)} ${LVL[g.lv]}`));l.appendChild(ln)}
+  } else {
+    const ln=document.createElement("span"); ln.className="seg";
+    const dot=document.createElement("span"); dot.className="dot "+CLS[info.lv]; ln.append(dot,document.createTextNode(LVL[info.lv])); l.appendChild(ln);
+  }
+  if(info.r.hint){const h=document.createElement("small"); h.className="hint"; h.textContent=info.r.hint; l.appendChild(h)}
+  row.appendChild(l);
+  return row;
+}
+
 function verifBand(v,mon,sun){
   const b=document.createElement("div"); b.className="verif"+(me&&[v.a,v.b,v.c].includes(me)?" mine":"");
   const t=document.createElement("span"); t.className="vt"; t.textContent="Vérif de la semaine";
@@ -423,46 +474,15 @@ async function saveVerif(k,f,val){
   catch(e){ if(prev) verifOv[k]=prev; else delete verifOv[k]; showNote("L'échange de vérif n'a pas été enregistré. Réessaie dans un instant."); render()}
 }
 
-function renderCounter(days,nSlots){
-  const cnt={}, sem={}, we={};
-  const kind={}; days.forEach(d=>d.slots.forEach(s=>kind[s.id]=(d.we||d.fer)?"we":"sem"));
-  for(const [k,n] of Object.entries(cells)){
-    const sid=k.split("__")[0]; if(!(sid in kind)) continue;
-    cnt[n]=(cnt[n]||0)+1; if(kind[sid]==="we") we[n]=(we[n]||0)+1; else sem[n]=(sem[n]||0)+1;
-  }
-  const nSem=Object.values(kind).filter(x=>x==="sem").length, nWe=nSlots-nSem;
-  const qQs=Math.round(nSem*2/4), qQw=Math.round(nWe*2/4), qOs=Math.round(nSem*2/6), qOw=Math.round(nWe*2/6);
-  const qQ=qQs+qQw, qO=qOs+qOw;
-  document.getElementById("quotaTxt").textContent=`Minimum pour armer le CCR à 4, si tout le monde se répartit parfaitement. Qualifiés : ${qQs} nuits en semaine + ${qQw} créneaux le week-end. Les autres : ${qOs} nuits en semaine + ${qOw} créneaux le week-end. Viser un peu plus, là où il manque du monde.`;
-  const box=document.getElementById("counter"); box.textContent="";
-  const group=(title,list,q,qs,qw)=>{
-    const g=document.createElement("div"); g.className="grp"; g.textContent=`${title} · minimum ${qs} sem. + ${qw} WE`; box.appendChild(g);
-    for(const n of list){
-      const c=cnt[n]||0, r=document.createElement("div"); r.className="cnt"+(n===me?" isme":"");
-      const b=document.createElement("b"); b.textContent=n;
-      const sm=document.createElement("small"); sm.className="split";
-      const s1=sem[n]||0, w1=we[n]||0;
-      sm.textContent=`sem. ${s1}/${qs} · WE ${w1}/${qw}`;
-      if(s1<qs||w1<qw) sm.classList.add("short");
-      b.appendChild(sm);
-      const tr=document.createElement("div"); tr.className="track";
-      const f=document.createElement("div"); f.className="fill "+(c>=q?"ok":c>=q/2?"":"low"); f.style.width=Math.min(100,100*c/q)+"%"; tr.appendChild(f);
-      const num=document.createElement("span"); num.className="num"; num.textContent=`${c}/${q}`;
-      r.append(b,tr,num); box.appendChild(r);
-    }
-  };
-  group("Chef / conducteur CCR",QUALIF,qQ,qQs,qQw);
-  group("Conducteurs VSAV et équipiers",OTHERS,qO,qOs,qOw);
-  renderBilan();
-}
-function slotHours(sid,k){return sid.endsWith("_n")?(k?(DEP(k)+24-ARR(k)):12):6}
+function renderCounter(){ renderBilan() }
+function hoursOf(sid,n){return sid.endsWith("_n")?(DEP(sid,n)+24-ARR(sid,n)):6}
 function bilanData(){
   const mk=mkey(cur), today=new Date(); today.setHours(0,0,0,0);
   const inPeriod=ds=>bilanMode==="mois"?ds.startsWith(mk):true;
-  const rows={}; [...QUALIF,...OTHERS].forEach(n=>rows[n]={c:0,h:0,v:0});
-  for(const [k,n] of Object.entries(cells)){
-    const sid=k.split("__")[0], ds=sid.slice(0,10);
-    if(!inPeriod(ds)||!rows[n]) continue; rows[n].c++; rows[n].h+=slotHours(sid,k);
+  const rows={}; ALL.forEach(n=>rows[n]={c:0,h:0,v:0});
+  for(const sid of Object.keys(ins)){
+    if(!inPeriod(sid.slice(0,10))) continue;
+    for(const n of namesIn(sid)){rows[n].c++; rows[n].h+=hoursOf(sid,n)}
   }
   for(const v of Object.values(VERIF)){
     if(v.mon>today) continue;
@@ -476,7 +496,7 @@ function renderBilan(){
   document.getElementById("bilanPer").textContent=bilanMode==="mois"?document.getElementById("mlabel").textContent:"depuis novembre 2026";
   document.querySelectorAll("#bilan [data-mode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===bilanMode));
   const rows=bilanData(), tb=document.getElementById("bilanBody"); tb.textContent="";
-  for(const n of [...QUALIF,...OTHERS]){
+  for(const n of ALL){
     const r=rows[n], tr=document.createElement("tr");
     for(const val of [n,r.c,r.h+" h",r.v]){const td=document.createElement("td"); td.textContent=val; tr.appendChild(td)}
     tb.appendChild(tr);
@@ -485,44 +505,87 @@ function renderBilan(){
 function bilanText(){
   const rows=bilanData();
   const head=`Bilan gardes CIS Épieds — ${document.getElementById("bilanPer").textContent}\nNom ; créneaux ; heures ; vérifs faites`;
-  return head+"\n"+[...QUALIF,...OTHERS].map(n=>`${n} ; ${rows[n].c} ; ${rows[n].h} ; ${rows[n].v}`).join("\n");
+  return head+"\n"+ALL.map(n=>`${n} ; ${rows[n].c} ; ${rows[n].h} ; ${rows[n].v}`).join("\n");
 }
 
-async function save(sid,post,name,s){
-  if(!db) return;
-  const r=ref(rdb,BASE+"/gardes/"+sid+"__"+post);
-  const prev=cells[sid+"__"+post];
-  if(name) cells[sid+"__"+post]=name; else delete cells[sid+"__"+post];
-  const hk=sid+"__"+post, hadHor=!!hor[hk]; if(hadHor) delete hor[hk];
-  render();
-  try{
-    await set(r,name||null);
-    if(hadHor) await set(ref(rdb,BASE+"/horaires/"+hk),null);
-  }catch(e){
-    if(prev) cells[sid+"__"+post]=prev; else delete cells[sid+"__"+post];
-    showNote("L'inscription n'a pas été enregistrée. Réessaie dans un instant.");
-    render();
-  }
+/* ===== Écritures ===== */
+function rebuild(){
+  const o={};
+  for(const src of [legacyIns,dbIns]) for(const [sid,m] of Object.entries(src)){o[sid]=o[sid]||{}; Object.assign(o[sid],m)}
+  ins=o;
 }
-async function saveHor(k,field,val){
-  const prev=hor[k]; const nv={a:ARR(k),d:DEP(k),[field]:val};
-  const isDef=nv.a===19&&nv.d===7;
-  if(isDef) delete hor[k]; else hor[k]=nv; render();
-  try{await set(ref(rdb,BASE+"/horaires/"+k),isDef?null:nv)}
-  catch(e){ if(prev) hor[k]=prev; else delete hor[k]; showNote("L'horaire n'a pas été enregistré. Réessaie dans un instant."); render()}
+async function write(path,val,undo,msg){
+  try{await set(ref(rdb,BASE+"/inscrits/"+path),val)}
+  catch(e){undo(); rebuild(); showNote(msg); render()}
+}
+function addName(sid,n){
+  if(!db||!ALL.includes(n)) return;
+  (dbIns[sid]=dbIns[sid]||{})[n]={a:19,d:7}; rebuild(); render();
+  write(`${sid}/${n}`,true,()=>{delete dbIns[sid][n]},"L'inscription n'a pas été enregistrée. Réessaie dans un instant.");
+}
+function removeName(sid,n){
+  if(!db) return;
+  const prev=dbIns[sid]&&dbIns[sid][n];
+  if(dbIns[sid]) delete dbIns[sid][n]; rebuild(); render();
+  write(`${sid}/${n}`,null,()=>{if(prev)(dbIns[sid]=dbIns[sid]||{})[n]=prev},"Le retrait n'a pas été enregistré. Réessaie dans un instant.");
+}
+function saveHor(sid,n,field,val){
+  if(!db) return;
+  const prev=(dbIns[sid]&&dbIns[sid][n])||{a:19,d:7};
+  const nv={a:ARR(sid,n),d:DEP(sid,n),[field]:val};
+  (dbIns[sid]=dbIns[sid]||{})[n]=nv; rebuild(); render();
+  write(`${sid}/${n}`,(nv.a===19&&nv.d===7)?true:nv,()=>{dbIns[sid][n]=prev},"L'horaire n'a pas été enregistré. Réessaie dans un instant.");
 }
 function showNote(t){const n=document.getElementById("note"); n.textContent=t; n.hidden=!t}
+const parseHor=(sid,x)=>{
+  if(!sid.endsWith("_n")||!x||typeof x!=="object") return {a:19,d:7};
+  return {a:[19,20,21].includes(Number(x.a))?Number(x.a):19, d:[3,4,5,6,7].includes(Number(x.d))?Number(x.d):7};
+};
+
+/* Ancien format (un nom par poste) : repris automatiquement puis effacé */
+let migrating=false;
+async function migrate(old){
+  if(migrating) return; migrating=true;
+  try{
+    const hs=(await get(ref(rdb,BASE+"/horaires"))).val()||{};
+    const upd={};
+    for(const [k,n] of Object.entries(old)){
+      const [sid]=k.split("__");
+      if(SLOT_RE.test(sid)&&ALL.includes(n)){const h=parseHor(sid,hs[k]); upd[`inscrits/${sid}/${n}`]=(h.a===19&&h.d===7)?true:h}
+      upd[`gardes/${k}`]=null;
+    }
+    upd["horaires"]=null;
+    await update(ref(rdb,BASE),upd);
+  }catch(e){/* on réessaiera au prochain chargement */}
+  migrating=false;
+}
 
 function subscribe(){
-  if(unsub){unsub();unsub=null}
   clearTimeout(loadTimer);
   loadTimer=setTimeout(()=>showNote("La base ne répond pas encore. Les inscriptions affichées peuvent ne pas être à jour."),10000);
-  unsub=onValue(ref(rdb,BASE+"/gardes"),snap=>{
+  onValue(ref(rdb,BASE+"/inscrits"),snap=>{
     clearTimeout(loadTimer); showNote("");
-    const v=snap.val()||{}, next={};
-    for(const [k,n] of Object.entries(v)){ if(typeof n==="string"&&/^\d{4}-\d{2}-\d{2}_[man]__(chef|ccr|vsav|eq)$/.test(k)) next[k]=n }
-    cells=next; render();
+    const v=snap.val()||{}, o={};
+    for(const [sid,m] of Object.entries(v)){
+      if(!SLOT_RE.test(sid)||!m||typeof m!=="object") continue;
+      for(const [n,x] of Object.entries(m)) if(ALL.includes(n)&&x) (o[sid]=o[sid]||{})[n]=parseHor(sid,x);
+    }
+    dbIns=o; rebuild(); render();
   },()=>{clearTimeout(loadTimer); showNote("Impossible de lire la base. Vérifie les règles de la Realtime Database dans Firebase.")});
+  onValue(ref(rdb,BASE+"/gardes"),snap=>{
+    const v=snap.val()||{}, o={};
+    for(const [k,n] of Object.entries(v)){
+      const [sid]=k.split("__");
+      if(typeof n==="string"&&SLOT_RE.test(sid)&&ALL.includes(n)) (o[sid]=o[sid]||{})[n]={a:19,d:7};
+    }
+    legacyIns=o; rebuild(); render();
+    if(Object.keys(v).length) migrate(v);
+  },()=>{});
+  onValue(ref(rdb,BASE+"/verif"),snap=>{
+    const v=snap.val()||{}, o={};
+    for(const [k,x] of Object.entries(v)){ if(x&&typeof x==="object") o[k]={a:typeof x.a==="string"?x.a:undefined,b:typeof x.b==="string"?x.b:undefined,c:typeof x.c==="string"?x.c:undefined} }
+    verifOv=o; render();
+  },()=>{});
 }
 function move(dir){
   let [y,m]=cur; m+=dir; if(m<0){m=11;y--} if(m>11){m=0;y++}
@@ -538,11 +601,10 @@ document.getElementById("prev").onclick=()=>move(-1);
 document.getElementById("next").onclick=()=>move(1);
 document.getElementById("onlyGaps").onclick=e=>{onlyGaps=!onlyGaps; e.currentTarget.setAttribute("aria-pressed",onlyGaps); render()};
 const meSel=document.getElementById("meSel");
-for(const n of [...QUALIF,...OTHERS]){const o=document.createElement("option");o.value=n;o.textContent=n;meSel.appendChild(o)}
+for(const n of ALL){const o=document.createElement("option");o.value=n;o.textContent=n;meSel.appendChild(o)}
 meSel.value=me;
 meSel.onchange=()=>{me=meSel.value; try{localStorage.setItem("gardes-me",me)}catch(e){} render()};
 
-render();
 db=true;
 const admBtn=document.getElementById("admBtn"), admForm=document.getElementById("admForm"), admErr=document.getElementById("admErr");
 try{isAdmin=sessionStorage.getItem("gardes-admin")==="1"}catch(e){}
@@ -559,22 +621,8 @@ admForm.addEventListener("submit",e=>{
   } else admErr.textContent="Mot de passe incorrect.";
 });
 syncAdm();
-subscribe();
-onValue(ref(rdb,BASE+"/horaires"),snap=>{
-  const v=snap.val()||{}, o={};
-  for(const [k,x] of Object.entries(v)){
-    if(!x||typeof x!=="object"||!/_n__(chef|ccr|vsav|eq)$/.test(k)) continue;
-    const a=[19,20,21].includes(Number(x.a))?Number(x.a):19, d=[3,4,5,6,7].includes(Number(x.d))?Number(x.d):7;
-    o[k]={a,d};
-  }
-  hor=o; render();
-},()=>{});
-onValue(ref(rdb,BASE+"/verif"),snap=>{
-  const v=snap.val()||{}, o={};
-  for(const [k,x] of Object.entries(v)){ if(x&&typeof x==="object") o[k]={a:typeof x.a==="string"?x.a:undefined,b:typeof x.b==="string"?x.b:undefined,c:typeof x.c==="string"?x.c:undefined} }
-  verifOv=o; render();
-},()=>{});
 render();
+subscribe();
 </script>
 </body>
 </html>

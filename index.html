@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>TEST Gardes Épieds</title>
+<title>Gardes Épieds</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -161,7 +161,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Gardes <span>Épieds</span> <small style="font-size:16px;color:var(--lvl2)">TEST</small></h1>
+      <h1>Gardes <span>Épieds</span></h1>
       <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · inscris-toi, l'appli répartit les postes</div>
     </div>
     <div class="adm"><button class="btn" id="admBtn">Accès chef de centre</button>
@@ -233,7 +233,7 @@ const firebaseConfig = {
 const ADMIN_PASSWORD = "caserne45";   // accès chef de centre (le même qu'avant), change-le si tu veux
 /* =================================================== */
 const app=initializeApp(firebaseConfig), rdb=getDatabase(app);
-const BASE="planning_test";   // VERSION DE TEST : base séparée, ne touche pas au vrai planning
+const BASE="planning";
 
 /* ===== QUALIFS : l'appli répartit les postes toute seule ===== */
 const QUALIF=["Thibaud","David","Fabrice","Jérôme"];

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Gardes Épieds</title>
+<title>TEST Gardes Épieds</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -161,7 +161,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Gardes <span>Épieds</span></h1>
+      <h1>Gardes <span>Épieds</span> <small style="font-size:16px;color:var(--lvl2)">TEST</small></h1>
       <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · inscris-toi, l'appli répartit les postes</div>
     </div>
     <div class="adm"><button class="btn" id="admBtn">Accès chef de centre</button>
@@ -233,7 +233,7 @@ const firebaseConfig = {
 const ADMIN_PASSWORD = "caserne45";   // accès chef de centre (le même qu'avant), change-le si tu veux
 /* =================================================== */
 const app=initializeApp(firebaseConfig), rdb=getDatabase(app);
-const BASE="planning";
+const BASE="planning_test";   // VERSION DE TEST : base séparée, ne touche pas au vrai planning
 
 /* ===== QUALIFS : l'appli répartit les postes toute seule ===== */
 const QUALIF=["Thibaud","David","Fabrice","Jérôme"];
@@ -245,7 +245,6 @@ const NO_VSAV=["Jérôme"];
                                               // ne monte pas dans le VSAV
 const CCR_CHEFS=["Thibaud","Fabrice","Jérôme"];                         // chef d'agrès CCR
 const CCR_DRIVERS=["Thibaud","Fabrice","Jérôme","David"];               // conducteur CCR
-const DRIVERS_ANY=[...new Set([...VSAV_DRIVERS,...CCR_DRIVERS])];          // conducteurs (prompt secours)
 
 const FERIES=new Set(["2026-11-11","2026-12-25","2027-01-01","2027-03-29","2027-05-01","2027-05-06","2027-05-08","2027-05-17","2027-07-14","2027-08-15","2027-11-01","2027-11-11","2027-12-25"]);
 const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
@@ -317,32 +316,53 @@ function slotsOf([y,m]){
 
 /* ===== Répartition automatique ===== */
 // équipiers : on met d'abord ceux qui n'ont pas d'autre qualif
-const eqOrder=names=>[...names].sort((x,y)=>(VSAV_CHEFS.includes(x)+CCR_DRIVERS.includes(x)+VSAV_DRIVERS.includes(x))-(VSAV_CHEFS.includes(y)+CCR_DRIVERS.includes(y)+VSAV_DRIVERS.includes(y)));
+/* rôles (les noms "_X…" sont des renforts fictifs pour calculer ce qui manque) */
+const isChefV=n=>VSAV_CHEFS.includes(n)||n.startsWith("_C");
+const isDrvV=n=>VSAV_DRIVERS.includes(n)||n.startsWith("_D")||n.startsWith("_C");
+const isChefC=n=>CCR_CHEFS.includes(n)||n.startsWith("_H");
+const isDrvC=n=>CCR_DRIVERS.includes(n)||n.startsWith("_K")||n.startsWith("_H");
+const canVSAV=n=>!NO_VSAV.includes(n)&&!n.startsWith("_K")&&!n.startsWith("_H");
+const skill=n=>isChefV(n)+isDrvV(n)+isDrvC(n);
+const eqOrder=names=>[...names].sort((x,y)=>skill(x)-skill(y));
 function vsavTeams(names){
   const out=[], eqs=eqOrder(names);
-  for(const c of names) if(VSAV_CHEFS.includes(c))
-    for(const d of eqOrder(names)) if(d!==c&&VSAV_DRIVERS.includes(d))
-      for(const e of eqs) if(e!==c&&e!==d&&!NO_VSAV.includes(e)) out.push([c,d,e]);
+  for(const c of names) if(isChefV(c)&&canVSAV(c))
+    for(const d of eqs) if(d!==c&&isDrvV(d)&&canVSAV(d))
+      for(const e of eqs) if(e!==c&&e!==d&&canVSAV(e)) out.push([c,d,e]);
   return out;
 }
 function ccrTeam(names){
-  for(const c of names) if(CCR_CHEFS.includes(c))
-    for(const d of names) if(d!==c&&CCR_DRIVERS.includes(d)){
+  for(const c of names) if(isChefC(c))
+    for(const d of eqOrder(names)) if(d!==c&&isDrvC(d)){
       const rest=eqOrder(names.filter(x=>x!==c&&x!==d));
       if(rest.length>=2) return [c,d,rest[0],rest[1]];
     }
   return null;
 }
-function missVSAV(names){
-  if(!names.some(n=>VSAV_CHEFS.includes(n))) return "un chef d'agrès VSAV";
-  if(!names.some(c=>VSAV_CHEFS.includes(c)&&names.some(d=>d!==c&&VSAV_DRIVERS.includes(d)))) return "un conducteur VSAV";
-  return "un équipier";
+const canPrompt=names=>names.length>=2&&names.some(n=>isDrvV(n)||isDrvC(n));
+/* plus petit renfort qui suffit : on essaie d'abord avec des équipiers, puis des conducteurs, puis des chefs */
+const ROLE_TXT={E:"un équipier",D:"un conducteur VSAV",C:"un chef d'agrès VSAV",K:"un conducteur CCR",H:"un chef d'agrès CCR"};
+function combos(letters,k){if(!k) return [[]]; const out=[]; letters.forEach((l,i)=>combos(letters.slice(i),k-1).forEach(r=>out.push([l,...r]))); return out}
+function needText(names,ok,letters,txtMap=ROLE_TXT){
+  const test=cb=>ok([...names,...cb.map((l,i)=>"_"+l+i)]);
+  for(let k=1;k<=4;k++) for(const cb of combos(letters,k)){
+    if(!test(cb)) continue;
+    const ORD="CDHKE"; cb.sort((a,b)=>ORD.indexOf(a)-ORD.indexOf(b));
+    const parts=cb.map((l,i)=>{
+      const alt=[...cb];
+      if(l==="D"&&!cb.includes("C")){alt[i]="C"; if(letters.includes("C")&&test(alt)) return "un conducteur ou un chef VSAV"}
+      if(l==="K"&&!cb.includes("H")){alt[i]="H"; if(letters.includes("H")&&test(alt)) return "un conducteur ou un chef CCR"}
+      return txtMap[l];
+    });
+    const cnt={}; parts.forEach(p=>cnt[p]=(cnt[p]||0)+1);
+    const txt=Object.entries(cnt).map(([p,n])=>n>1?(p==="un équipier"?`${n} équipiers`:`${n} × ${p.replace(/^un /,"")}`):p);
+    return txt.length>1?txt.slice(0,-1).join(", ")+" et "+txt.at(-1):txt[0];
+  }
+  return "du monde";
 }
-function missCCR(names){
-  if(!names.some(n=>CCR_CHEFS.includes(n))) return "un chef d'agrès CCR";
-  if(!names.some(c=>CCR_CHEFS.includes(c)&&names.some(d=>d!==c&&CCR_DRIVERS.includes(d)))) return "un conducteur CCR";
-  const need=Math.max(1,4-names.length); return need>1?`${need} équipiers`:"un équipier";
-}
+const needAmb=names=>needText(names,n=>vsavTeams(n).length>0,["E","D","C"]);
+const needCCR=names=>needText(names,n=>!!ccrTeam(n),["E","K","H"]);
+const needPrompt=names=>needText(names,canPrompt,["E","D"],{E:"un équipier",D:"un conducteur"});
 /* niveaux : 0 rien · 1 prompt secours · 2 CCR mais pas d'ambulance · 3 ambulance · 4 ambulance ou CCR · 5 ambulance + CCR en même temps */
 const LVL={0:"Rien ne part",1:"Prompt secours",2:"CCR, pas d'ambulance",3:"Ambulance",4:"Ambulance ou CCR",5:"Ambulance + CCR"};
 const CLS={0:"l0",1:"l2",2:"l2",3:"l3",4:"l4",5:"l4"};
@@ -351,12 +371,14 @@ function analyze(list){
   const vt=vsavTeams(names);
   for(const t of vt){const c=ccrTeam(names.filter(x=>!t.includes(x))); if(c) return {lv:5,names,vsav:t,ccr:c,hint:""}}
   const c=ccrTeam(names);
-  if(vt.length&&c) return {lv:4,names,vsav:vt[0],ccr:c,hint:"Les deux en même temps : il manque du monde"};
-  if(vt.length) return {lv:3,names,vsav:vt[0],hint:"Pour le CCR : il manque "+missCCR(names)};
-  if(c) return {lv:2,names,ccr:c,hint:"Pour l'ambulance : il manque "+missVSAV(names)};
-  // prompt secours : au moins un conducteur (VSAV ou CCR) + un équipier
-  const ps=names.length>=2&&names.some(n=>DRIVERS_ANY.includes(n));
-  const hint=!names.length?"Personne d'inscrit":(!ps&&names.length>=2)?"Pas de conducteur : même le prompt secours ne part pas":"Pour l'ambulance : il manque "+missVSAV(names);
+  if(vt.length&&c) return {lv:4,names,vsav:vt[0],ccr:c,hint:"Pour les deux en même temps : il manque du monde"};
+  if(vt.length) return {lv:3,names,vsav:vt[0],hint:"Pour le CCR : il manque "+needCCR(names)};
+  if(c) return {lv:2,names,ccr:c,hint:"Pour l'ambulance : il manque "+needAmb(names)};
+  const ps=canPrompt(names);   // prompt secours : au moins un conducteur + un équipier
+  let hint;
+  if(!names.length) hint="Personne d'inscrit";
+  else if(!ps) hint=`Pour un prompt secours : il manque ${needPrompt(names)} · pour l'ambulance : ${needAmb(names)}`;
+  else hint="Pour l'ambulance : il manque "+needAmb(names);
   return {lv:ps?1:0,names,hint};
 }
 /* Nuit : heure par heure (19 h → 7 h) selon l'arrivée et le départ de chacun */

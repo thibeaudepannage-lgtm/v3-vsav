@@ -60,6 +60,12 @@ button,select{font:inherit;color:inherit}
 .alerts li .what{font-weight:700}.alerts li .what.l0{color:var(--lvl0)}.alerts li .what.l2{color:var(--lvl2)}
 .alerts li small{color:var(--muted);font-size:12px}
 .alerts li .who2{flex-basis:100%;order:5}
+.alerts li .part{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.alerts li .ph{font-weight:700;font-variant-numeric:tabular-nums;min-width:62px}
+.alerts li .myhrs{flex-basis:100%;order:6;font-size:13px;display:flex;align-items:center;gap:6px}
+.alerts li .myhrs select{font-size:13px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.alerts li .myhrs select.off{color:var(--lvl2);border-color:var(--lvl2);font-weight:600}
+.alerts li .unme{margin-left:0;padding:3px 9px;font-size:13px;font-weight:600;color:var(--muted)}
 .alerts li .okme{margin-left:auto;font-weight:700;color:var(--lvl4);font-size:13px}
 .alerts li .btn{margin-left:auto;padding:4px 10px;font-weight:600}
 .alerts.ok{border-color:var(--lvl4);background:var(--panel)}.alerts.ok h2{color:var(--lvl4)}
@@ -176,6 +182,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
       <button class="btn" id="next" aria-label="Mois suivant">›</button>
     </div>
     <button class="btn" id="onlyGaps" aria-pressed="false">Créneaux à compléter</button>
+    <button class="btn" id="pastBtn" type="button" hidden>Voir les jours passés</button>
     <label class="me">Je suis
       <select id="meSel"><option value="">—</option></select>
     </label>
@@ -250,6 +257,7 @@ const FERIES=new Set(["2026-11-11","2026-12-25","2027-01-01","2027-03-29","2027-
 const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
 const FIRST=[2026,10], LAST=[2027,11];
 let cur=[2026,10];
+{const n=new Date(), k=n.getFullYear()*12+n.getMonth(); if(k>=FIRST[0]*12+FIRST[1]&&k<=LAST[0]*12+LAST[1]) cur=[n.getFullYear(),n.getMonth()]}   // on ouvre sur le mois en cours
 let dbIns={}, legacyIns={}, ins={};   // slotId -> {nom: {a,d}}
 let verifOv={};         // mondayISO -> {a,b,c} overrides
 const ROT0=new Date(2026,10,2); // lundi 2 nov. 2026 = semaine 0 du tour de rôle
@@ -296,7 +304,7 @@ function computeVerifs(){
   }
 }
 function verifFor(mon){return VERIF[iso(mon)]||{k:iso(mon),a:ROT_A[0],b:ROT_B_FALLBACK[0],c:ROT_B_FALLBACK[1],mode:"tour"}}
-let isAdmin=false, bilanMode="mois";
+let isAdmin=false, bilanMode="mois", showPast=false;
 let db=null, canWrite=true, loadTimer=null, onlyGaps=false;
 let me=""; try{me=localStorage.getItem("gardes-me")||""}catch(e){}
 
@@ -416,13 +424,18 @@ function render(){
   computeVerifs();
   const days=slotsOf(cur), roster=document.getElementById("roster"); roster.textContent="";
   const tally={0:0,1:0,2:0,3:0,4:0,5:0}; let nSlots=0;
-  const myV=[];
+  const myV=[], todayIso=iso(new Date());
+  let lastBand="", hiddenPast=0;
   for(const day of days){
+    const mon=mondayOf(day.ds), v=verifFor(mon);
     if(day.wd===1||day.ds.endsWith("-01")){
-      const mon=mondayOf(day.ds), v=verifFor(mon);
-      const sun=new Date(mon); sun.setDate(sun.getDate()+6);
       if(me&&[v.a,v.b,v.c].includes(me)) myV.push(`semaine du ${pad(mon.getDate())}/${pad(mon.getMonth()+1)}`);
-      if(!onlyGaps) roster.appendChild(verifBand(v,mon,sun));
+    }
+    const past=day.ds<todayIso&&!showPast;
+    if(past){hiddenPast++; for(const s of day.slots){nSlots++; tally[slotInfo(s.id).lv]++} continue}
+    if(!onlyGaps&&iso(mon)!==lastBand){
+      lastBand=iso(mon); const sun=new Date(mon); sun.setDate(sun.getDate()+6);
+      roster.appendChild(verifBand(v,mon,sun));
     }
     const box=document.createElement("section");
     box.className="day"+(day.fer?" fer":day.we?" we":"");
@@ -439,6 +452,8 @@ function render(){
     }
     if(shown){box.prepend(dn); roster.appendChild(box)}
   }
+  const pb=document.getElementById("pastBtn");
+  pb.hidden=!hiddenPast&&!showPast; pb.textContent=showPast?"Masquer les jours passés":`Voir les jours passés (${hiddenPast})`;
   if(onlyGaps&&!roster.childElementCount){const p=document.createElement("p");p.className="empty";p.textContent="Une ambulance peut partir sur tous les créneaux du mois.";roster.appendChild(p)}
   const sm=document.getElementById("summary"); sm.textContent="";
   for(const lv of [5,4,3,2,1,0]){
@@ -523,9 +538,11 @@ function upcomingGaps(){
       if(end<=now||start>lim) continue;
       const info=slotInfo(s.id);
       if(info.lv>=3) continue;
-      let hours=s.h;
-      if(info.segs){const bad=info.segs.filter(g=>g.lv<3); if(bad.length&&info.segs.length>1) hours=bad.map(g=>`${hh(g.from)}–${hh(g.to)}`).join(", ")}
-      out.push({s,day,start,info,hours});
+      // une ligne par tranche horaire sans ambulance (la nuit, selon les arrivées et départs)
+      const parts=(info.segs&&info.segs.length>1)
+        ? info.segs.filter(g=>g.lv<3).map(g=>({hours:`${hh(g.from)}–${hh(g.to)}`,lv:g.lv,hint:g.r.hint}))
+        : [{hours:"",lv:info.lv,hint:info.r.hint}];
+      out.push({s,day,start,info,parts});
     }
   }
   return out.sort((a,b)=>a.start-b.start);
@@ -547,7 +564,12 @@ function renderAlerts(){
   h.textContent=`⚠ ${gaps.length} créneau${gaps.length>1?"x":""} sans ambulance dans les 7 jours`;
   const cp=document.createElement("button"); cp.className="btn"; cp.type="button"; cp.textContent="Copier pour le groupe";
   cp.addEventListener("click",async()=>{
-    const txt="🚨 Gardes Épieds : l'ambulance ne part pas sur ces créneaux\n"+gaps.map(g=>`• ${dayLabel(g.start,g.s)} (${g.hours}) : ${LVL[g.info.lv].toLowerCase()}${g.info.r.hint?" — "+g.info.r.hint.replace("Pour l'ambulance : ","").toLowerCase():""}`).join("\n")+"\nQui peut se mettre ? "+location.href.split("#")[0];
+    const line=(lv,hint)=>`${LVL[lv].toLowerCase()}${hint?" — "+hint.charAt(0).toLowerCase()+hint.slice(1):""}`;
+    const txt="🚨 Gardes Épieds : l'ambulance ne part pas sur ces créneaux\n"+gaps.map(g=>
+      g.parts.length===1&&!g.parts[0].hours
+        ? `• ${dayLabel(g.start,g.s)} (${g.s.h}) : ${line(g.parts[0].lv,g.parts[0].hint)}`
+        : `• ${dayLabel(g.start,g.s)} :\n`+g.parts.map(p=>`   ${p.hours} : ${line(p.lv,p.hint)}`).join("\n")
+    ).join("\n")+"\nQui peut se mettre ? "+location.href.split("#")[0];
     try{await navigator.clipboard.writeText(txt); cp.textContent="Copié ✓"; setTimeout(()=>cp.textContent="Copier pour le groupe",2000)}
     catch(e){window.prompt("Copie ce message :",txt)}
   });
@@ -556,13 +578,37 @@ function renderAlerts(){
   const ul=document.createElement("ul");
   for(const g of gaps){
     const li=document.createElement("li");
-    const b=document.createElement("b"); b.textContent=`${dayLabel(g.start,g.s)} · ${g.hours}`;
-    const w=document.createElement("span"); w.className="what "+CLS[g.info.lv]; w.textContent=LVL[g.info.lv];
-    li.append(b,w);
-    if(g.info.r.hint){const sm=document.createElement("small"); sm.textContent=g.info.r.hint.replace("Pour l'ambulance : ",""); li.appendChild(sm)}
+    const b=document.createElement("b"); b.textContent=`${dayLabel(g.start,g.s)} · ${g.s.h}`;
+    li.appendChild(b);
+    for(const p of g.parts){
+      const row=document.createElement("div"); row.className="part";
+      if(p.hours){const t=document.createElement("span"); t.className="ph"; t.textContent=p.hours; row.appendChild(t)}
+      const w=document.createElement("span"); w.className="what "+CLS[p.lv]; w.textContent=LVL[p.lv]; row.appendChild(w);
+      if(p.hint){const sm=document.createElement("small"); sm.textContent=p.hint; row.appendChild(sm)}
+      li.appendChild(row);
+    }
     const who=namesIn(g.s.id);
-    if(who.length){const sm=document.createElement("small"); sm.className="who2"; sm.textContent="Inscrits : "+who.join(", "); li.appendChild(sm)}
-    if(me&&who.includes(me)){const ok=document.createElement("span"); ok.className="okme"; ok.textContent="✓ Tu es dessus"; li.appendChild(ok)}
+    if(who.length){const sm=document.createElement("small"); sm.className="who2";
+      sm.textContent="Inscrits : "+who.map(n=>{const a=ARR(g.s.id,n),d=DEP(g.s.id,n); return g.s.id.endsWith("_n")&&(a!==19||d!==7)?`${n} (${a}h→${d}h)`:n}).join(", ");
+      li.appendChild(sm)}
+    if(me&&who.includes(me)){
+      const ok=document.createElement("span"); ok.className="okme"; ok.textContent="✓ Tu es dessus"; li.appendChild(ok);
+      const rm=document.createElement("button"); rm.className="btn unme"; rm.type="button"; rm.textContent="Me retirer"; rm.disabled=!canWrite||!db;
+      rm.setAttribute("aria-label",`Me retirer : ${dayLabel(g.start,g.s)}`);
+      rm.addEventListener("click",()=>removeName(g.s.id,me)); li.appendChild(rm);
+      if(g.s.id.endsWith("_n")){   // tes heures, réglables directement depuis l'alerte
+        const hr=document.createElement("span"); hr.className="myhrs"; hr.append("Mes heures : ");
+        const mk=(label,opts,val,field)=>{
+          const se=document.createElement("select"); se.setAttribute("aria-label",`${label} ${me} : ${dayLabel(g.start,g.s)}`); se.disabled=!canWrite||!db;
+          for(const [v,t] of opts){const o=document.createElement("option");o.value=v;o.textContent=t;se.appendChild(o)}
+          se.value=String(val); if(String(val)!==String(opts[0][0])) se.classList.add("off");
+          se.addEventListener("change",()=>saveHor(g.s.id,me,field,Number(se.value)));
+          return se;
+        };
+        hr.append(mk("Arrivée",[[19,"19h"],[20,"20h"],[21,"21h"]],ARR(g.s.id,me),"a"),mk("Départ",[[7,"→7h"],[6,"→6h"],[5,"→5h"],[4,"→4h"],[3,"→3h"]],DEP(g.s.id,me),"d"));
+        li.appendChild(hr);
+      }
+    }
     if(me&&!who.includes(me)){
       const bt=document.createElement("button"); bt.className="btn"; bt.type="button"; bt.textContent="+ Moi"; bt.disabled=!canWrite||!db;
       bt.setAttribute("aria-label",`M'inscrire : ${dayLabel(g.start,g.s)}`);
@@ -705,6 +751,7 @@ function removeName(sid,n){
   if(!db) return;
   const prev=dbIns[sid]&&dbIns[sid][n];
   if(dbIns[sid]) delete dbIns[sid][n]; rebuild(); render();
+  flash(`${n} retiré`);
   write(`${sid}/${n}`,null,()=>{if(prev)(dbIns[sid]=dbIns[sid]||{})[n]=prev},"Le retrait n'a pas été enregistré. Réessaie dans un instant.");
 }
 function saveHor(sid,n,field,val){
@@ -778,6 +825,7 @@ document.getElementById("copyBilan").onclick=async e=>{
   try{await navigator.clipboard.writeText(txt); btn.textContent="Bilan copié"; setTimeout(()=>btn.textContent="Copier le bilan",2000)}
   catch(err){const ta=document.getElementById("bilanTxt"); ta.hidden=false; ta.value=txt; ta.select()}
 };
+document.getElementById("pastBtn").onclick=()=>{showPast=!showPast; render()};
 document.getElementById("prev").onclick=()=>move(-1);
 document.getElementById("next").onclick=()=>move(1);
 document.getElementById("onlyGaps").onclick=e=>{onlyGaps=!onlyGaps; e.currentTarget.setAttribute("aria-pressed",onlyGaps); render()};

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Gardes Épieds</title>
+<title>TEST Gardes Épieds</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -50,6 +50,17 @@ button,select{font:inherit;color:inherit}
 .l0 .dot,.dot.l0{background:var(--lvl0)}.l2 .dot,.dot.l2{background:var(--lvl2)}.l3 .dot,.dot.l3{background:var(--lvl3)}.l4 .dot,.dot.l4{background:var(--lvl4)}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;margin-top:14px;align-items:start}
 @media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.alerts{margin-top:14px;border:2px solid var(--red);border-radius:12px;background:var(--red-soft);padding:12px 14px}
+.alerts h2{font-family:var(--display);font-size:22px;margin:0;color:var(--red);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alerts h2 .btn{margin-left:auto;font-family:var(--body);font-size:13px;color:var(--ink)}
+.alerts p{margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.alerts ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.alerts li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:var(--panel);border-radius:8px;padding:7px 10px;font-size:14px}
+.alerts li b{min-width:150px}
+.alerts li .what{font-weight:700}.alerts li .what.l0{color:var(--lvl0)}.alerts li .what.l2{color:var(--lvl2)}
+.alerts li small{color:var(--muted);font-size:12px}
+.alerts li .btn{margin-left:auto;padding:4px 10px;font-weight:600}
+.alerts.ok{border-color:var(--lvl4);background:var(--panel)}.alerts.ok h2{color:var(--lvl4)}
 .note{background:var(--red-soft);border-radius:8px;padding:10px 12px;font-size:14px;margin-top:12px}
 .note[hidden]{display:none}
 /* roster */
@@ -102,6 +113,19 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 .fill{height:100%;border-radius:5px;background:var(--lvl3)}
 .fill.ok{background:var(--lvl4)}.fill.low{background:var(--lvl2)}
 .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.gbig{font-family:var(--display);font-size:40px;font-weight:700;line-height:1;margin-top:6px}
+.gbig small{display:block;font-family:var(--body);font-size:14px;font-weight:600;color:var(--muted);margin-top:4px}
+.gtrack{height:14px;background:var(--line);border-radius:7px;overflow:hidden;margin:8px 0 4px;display:flex}
+.gtrack span{height:100%}
+.gleg{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.gleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.mine{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.mine h3{font-size:15px;margin:0 0 4px}
+.mine p{font-size:13px;color:var(--muted);margin:0 0 8px}
+.mine ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.mine li{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 6px;border-radius:6px;background:var(--bg)}
+.mine li span{flex:1}.mine li small{color:var(--muted)}
+.mine li .btn{padding:3px 9px;font-size:13px;font-weight:600}
 .grp{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:10px 0 2px}
 .rules{margin-top:12px;font-size:13px;color:var(--muted);display:grid;gap:4px}
 .rules b{color:var(--ink)}
@@ -123,6 +147,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 #bilan textarea{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;font-size:12px}
 .adm{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .adm form{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.adm form[hidden]{display:none}
 .adm input{font:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0;width:170px}
 .err{color:var(--red);font-size:13px;width:100%;text-align:right}
 </style>
@@ -132,7 +157,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Gardes <span>Épieds</span></h1>
+      <h1>Gardes <span>Épieds</span> <small style="font-size:16px;color:var(--lvl2)">TEST</small></h1>
       <div class="sub">CIS Épieds-en-Beauce · nuits en semaine, week-ends et fériés en 3 temps · inscris-toi, l'appli répartit les postes</div>
     </div>
     <div class="adm"><button class="btn" id="admBtn">Accès chef de centre</button>
@@ -152,6 +177,7 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
     </label>
   </div>
 
+  <section class="alerts" id="alerts" hidden aria-live="polite"></section>
   <div class="summary" id="summary"></div>
   <div class="note" id="note" hidden></div>
 
@@ -164,9 +190,11 @@ aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
     </main>
     <aside>
       <div class="card">
-        <h2>Bon à savoir</h2>
+        <h2>Le centre ce mois-ci</h2>
+        <div id="gauge"></div>
+        <div id="mine"></div>
         <div class="rules">
-          <div>Inscris-toi quand tu es dispo, autant que tu peux. La nuit, indique ton <b>heure d'arrivée</b> (19 h, 20 h ou 21 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
+          <div>1 nuit = <b>12 h</b> · 1 demi-journée = <b>6 h</b>. La nuit, indique ton <b>heure d'arrivée</b> (19 h, 20 h ou 21 h) et l'heure où tu <b>te retires</b> selon ton boulot.</div>
           <div>Un empêchement : <b>on se fait remplacer</b> par quelqu'un qui a la même qualif.</div>
           <div><b>Vérif hebdo</b> : une équipe de 3 désignée d'office parmi les inscrits de la semaine : Thibaud, David ou Fabrice + deux autres, celui qui en a fait le moins passe en premier. Échange possible.</div>
           <div id="myVerif"></div>
@@ -201,7 +229,7 @@ const firebaseConfig = {
 const ADMIN_PASSWORD = "caserne45";   // accès chef de centre (le même qu'avant), change-le si tu veux
 /* =================================================== */
 const app=initializeApp(firebaseConfig), rdb=getDatabase(app);
-const BASE="planning";
+const BASE="planning_test";   // VERSION DE TEST : base séparée, ne touche pas au vrai planning
 
 /* ===== QUALIFS : l'appli répartit les postes toute seule ===== */
 const QUALIF=["Thibaud","David","Fabrice","Jérôme"];
@@ -209,9 +237,11 @@ const OTHERS=["Baptiste","Bertrand","Coralie","Marina","Max","Clotilde"];
 const ALL=[...QUALIF,...OTHERS];
 const VSAV_CHEFS=["Thibaud","David","Fabrice"];                         // chef d'agrès VSAV
 const VSAV_DRIVERS=["Baptiste","Bertrand","Coralie","Thibaud","David","Fabrice"]; // conducteur VSAV
-const NO_VSAV=["Jérôme"];                                              // ne monte pas dans le VSAV
+const NO_VSAV=["Jérôme"];
+                                              // ne monte pas dans le VSAV
 const CCR_CHEFS=["Thibaud","Fabrice","Jérôme"];                         // chef d'agrès CCR
 const CCR_DRIVERS=["Thibaud","Fabrice","Jérôme","David"];               // conducteur CCR
+const DRIVERS_ANY=[...new Set([...VSAV_DRIVERS,...CCR_DRIVERS])];          // conducteurs (prompt secours)
 
 const FERIES=new Set(["2026-11-11","2026-12-25","2027-01-01","2027-03-29","2027-05-01","2027-05-06","2027-05-08","2027-05-17","2027-07-14","2027-08-15","2027-11-01","2027-11-11","2027-12-25"]);
 const JOURS=["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
@@ -320,7 +350,10 @@ function analyze(list){
   if(vt.length&&c) return {lv:4,names,vsav:vt[0],ccr:c,hint:"Les deux en même temps : il manque du monde"};
   if(vt.length) return {lv:3,names,vsav:vt[0],hint:"Pour le CCR : il manque "+missCCR(names)};
   if(c) return {lv:2,names,ccr:c,hint:"Pour l'ambulance : il manque "+missVSAV(names)};
-  return {lv:names.length>=2?1:0,names,hint:names.length?"Pour l'ambulance : il manque "+missVSAV(names):""};
+  // prompt secours : au moins un conducteur (VSAV ou CCR) + un équipier
+  const ps=names.length>=2&&names.some(n=>DRIVERS_ANY.includes(n));
+  const hint=!names.length?"Personne d'inscrit":(!ps&&names.length>=2)?"Pas de conducteur : même le prompt secours ne part pas":"Pour l'ambulance : il manque "+missVSAV(names);
+  return {lv:ps?1:0,names,hint};
 }
 /* Nuit : heure par heure (19 h → 7 h) selon l'arrivée et le départ de chacun */
 function nightSegments(sid){
@@ -390,6 +423,7 @@ function render(){
   }
   const t=document.createElement("span"); t.className="chip"; t.textContent=`${nSlots} créneaux dans le mois`; sm.appendChild(t);
   renderCounter(days,nSlots);
+  renderAlerts();
   const mv=document.getElementById("myVerif");
   mv.textContent=me?(myV.length?`${me}, ta vérif ce mois : ${myV.join(", ")}.`:`${me}, pas de vérif pour toi ce mois-ci.`):"";
 }
@@ -449,6 +483,66 @@ function slotRow(s,info){
   return row;
 }
 
+/* ===== Alertes : créneaux des 7 prochains jours où l'ambulance ne part pas ===== */
+const SLOT_T={m:[7,13],a:[13,19],n:[19,31]};
+function upcomingGaps(){
+  const now=new Date(), lim=new Date(now.getTime()+7*864e5), out=[];
+  const months=[[now.getFullYear(),now.getMonth()],[lim.getFullYear(),lim.getMonth()]];
+  const seen=new Set();
+  for(const mo of months){
+    if(seen.has(mkey(mo))) continue; seen.add(mkey(mo));
+    for(const day of slotsOf(mo)) for(const s of day.slots){
+      const [y,m,d]=day.ds.split("-").map(Number), [h0,h1]=SLOT_T[s.id.slice(-1)];
+      const start=new Date(y,m-1,d,h0), end=new Date(y,m-1,d,h1);
+      if(end<=now||start>lim) continue;
+      const info=slotInfo(s.id);
+      if(info.lv>=3) continue;
+      let hours=s.h;
+      if(info.segs){const bad=info.segs.filter(g=>g.lv<3); if(bad.length&&info.segs.length>1) hours=bad.map(g=>`${hh(g.from)}–${hh(g.to)}`).join(", ")}
+      out.push({s,day,start,info,hours});
+    }
+  }
+  return out.sort((a,b)=>a.start-b.start);
+}
+function dayLabel(start,s){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const d0=new Date(start); d0.setHours(0,0,0,0);
+  const diff=Math.round((d0-t)/864e5);
+  const part=s.c==="Nuit"?"nuit":s.c==="Matin"?"matin":"après-midi";
+  if(diff===0) return s.c==="Nuit"?"Ce soir":part==="matin"?"Ce matin":"Cet après-midi";
+  if(diff===1) return s.c==="Nuit"?"Demain soir":`Demain ${part}`;
+  return `${JOURS[start.getDay()]} ${pad(start.getDate())}/${pad(start.getMonth()+1)} ${part}`;
+}
+function renderAlerts(){
+  const box=document.getElementById("alerts"), gaps=upcomingGaps();
+  box.textContent=""; box.hidden=false; box.classList.toggle("ok",!gaps.length);
+  const h=document.createElement("h2");
+  if(!gaps.length){h.textContent="✓ L'ambulance peut partir sur tous les créneaux des 7 prochains jours"; box.appendChild(h); return}
+  h.textContent=`⚠ ${gaps.length} créneau${gaps.length>1?"x":""} sans ambulance dans les 7 jours`;
+  const cp=document.createElement("button"); cp.className="btn"; cp.type="button"; cp.textContent="Copier pour le groupe";
+  cp.addEventListener("click",async()=>{
+    const txt="🚨 Gardes Épieds : l'ambulance ne part pas sur ces créneaux\n"+gaps.map(g=>`• ${dayLabel(g.start,g.s)} (${g.hours}) : ${LVL[g.info.lv].toLowerCase()}${g.info.r.hint?" — "+g.info.r.hint.replace("Pour l'ambulance : ","").toLowerCase():""}`).join("\n")+"\nQui peut se mettre ? "+location.href.split("#")[0];
+    try{await navigator.clipboard.writeText(txt); cp.textContent="Copié ✓"; setTimeout(()=>cp.textContent="Copier pour le groupe",2000)}
+    catch(e){window.prompt("Copie ce message :",txt)}
+  });
+  h.appendChild(cp); box.appendChild(h);
+  const p=document.createElement("p"); p.textContent="Si tu es dispo sur un de ces créneaux, mets-toi dessus : c'est là qu'on a besoin de toi."; box.appendChild(p);
+  const ul=document.createElement("ul");
+  for(const g of gaps){
+    const li=document.createElement("li");
+    const b=document.createElement("b"); b.textContent=`${dayLabel(g.start,g.s)} · ${g.hours}`;
+    const w=document.createElement("span"); w.className="what "+CLS[g.info.lv]; w.textContent=LVL[g.info.lv];
+    li.append(b,w);
+    if(g.info.r.hint){const sm=document.createElement("small"); sm.textContent=g.info.r.hint.replace("Pour l'ambulance : ",""); li.appendChild(sm)}
+    if(me&&!namesIn(g.s.id).includes(me)){
+      const bt=document.createElement("button"); bt.className="btn"; bt.type="button"; bt.textContent="+ Moi"; bt.disabled=!canWrite||!db;
+      bt.setAttribute("aria-label",`M'inscrire : ${dayLabel(g.start,g.s)}`);
+      bt.addEventListener("click",()=>addName(g.s.id,me)); li.appendChild(bt);
+    }
+    ul.appendChild(li);
+  }
+  box.appendChild(ul);
+}
 function verifBand(v,mon,sun){
   const b=document.createElement("div"); b.className="verif"+(me&&[v.a,v.b,v.c].includes(me)?" mine":"");
   const t=document.createElement("span"); t.className="vt"; t.textContent="Vérif de la semaine";
@@ -474,7 +568,61 @@ async function saveVerif(k,f,val){
   catch(e){ if(prev) verifOv[k]=prev; else delete verifOv[k]; showNote("L'échange de vérif n'a pas été enregistré. Réessaie dans un instant."); render()}
 }
 
-function renderCounter(){ renderBilan() }
+/* ===== Jauge collective + « là où toi tu fais partir l'ambulance » ===== */
+function infoWith(sid,n){
+  const had=ins[sid]&&ins[sid][n]; if(had) return slotInfo(sid);
+  (ins[sid]=ins[sid]||{})[n]={a:19,d:7};
+  const r=slotInfo(sid);
+  delete ins[sid][n]; if(!Object.keys(ins[sid]).length) delete ins[sid];
+  return r;
+}
+function slotEnded(ds,s){const [y,m,d]=ds.split("-").map(Number); return new Date(y,m-1,d,SLOT_T[s.id.slice(-1)][1])<=new Date()}
+function renderCounter(days,nSlots){
+  let amb=0, ccr=0;
+  for(const d of days) for(const s of d.slots){const lv=slotInfo(s.id).lv; if(lv>=3) amb++; if(lv>=4||lv===2) ccr++}
+  const pct=nSlots?Math.round(100*amb/nSlots):0;
+  const g=document.getElementById("gauge"); g.textContent="";
+  const big=document.createElement("div"); big.className="gbig"; big.textContent=`${amb}/${nSlots}`;
+  const sm=document.createElement("small"); sm.textContent=`créneaux où l'ambulance peut partir (${pct} %)`; big.appendChild(sm);
+  const tr=document.createElement("div"); tr.className="gtrack"; tr.setAttribute("role","img"); tr.setAttribute("aria-label",`L'ambulance peut partir sur ${amb} créneaux sur ${nSlots}`);
+  const f=document.createElement("span"); f.style.width=pct+"%"; f.style.background="var(--lvl4)"; tr.appendChild(f);
+  const lg=document.createElement("div"); lg.className="gleg";
+  lg.innerHTML=`<span>Objectif du centre : <b>zéro créneau sans ambulance</b></span>`;
+  const c2=document.createElement("span"); c2.textContent=`CCR armable sur ${ccr} créneau${ccr>1?"x":""}`; lg.appendChild(c2);
+  g.append(big,tr,lg);
+
+  const box=document.getElementById("mine"); box.textContent=""; box.className=me?"mine":"";
+  if(!me){const p=document.createElement("p"); p.className="k"; p.style.marginTop="10px"; p.textContent="Choisis ton nom dans « Je suis » : l'appli te montre les créneaux où toi, tu fais partir l'ambulance."; box.appendChild(p); return renderBilan()}
+  const list=[];
+  for(const d of days) for(const s of d.slots){
+    if(slotEnded(d.ds,s)||namesIn(s.id).includes(me)) continue;
+    const before=slotInfo(s.id).lv, after=infoWith(s.id,me).lv;
+    if(before<3&&after>=3) list.push({d,s,ccr:false});
+    else if(before>=3&&before<5&&before!==4&&(after===4||after===5)) list.push({d,s,ccr:true});
+  }
+  const amb2=list.filter(x=>!x.ccr);
+  const h=document.createElement("h3");
+  h.textContent=amb2.length?`${me}, il y a ${amb2.length} créneau${amb2.length>1?"x":""} où, si tu te mets, l'ambulance part`:`${me}, aucun créneau à venir où ta seule présence fait partir l'ambulance`;
+  const p=document.createElement("p");
+  p.textContent=amb2.length?"C'est là que tu es le plus utile ce mois-ci.":"Regarde « Créneaux à compléter » : il y manque peut-être plusieurs personnes, dont toi.";
+  box.append(h,p);
+  const ul=document.createElement("ul");
+  const show=[...amb2,...list.filter(x=>x.ccr)];
+  for(const x of show.slice(0,12)){
+    const li=document.createElement("li");
+    const sp=document.createElement("span"); const [,mo,dd]=x.d.ds.split("-");
+    sp.textContent=`${JOURS[x.d.wd]} ${dd}/${mo} · ${x.s.c.toLowerCase()}`;
+    li.appendChild(sp);
+    if(x.ccr){const t=document.createElement("small"); t.textContent="+ CCR"; li.appendChild(t)}
+    const bt=document.createElement("button"); bt.className="btn"; bt.type="button"; bt.textContent="+ Moi"; bt.disabled=!canWrite||!db;
+    bt.setAttribute("aria-label",`M'inscrire : ${sp.textContent}`);
+    bt.addEventListener("click",()=>addName(x.s.id,me)); li.appendChild(bt);
+    ul.appendChild(li);
+  }
+  if(show.length>12){const li=document.createElement("li"); li.textContent=`… et ${show.length-12} autres`; ul.appendChild(li)}
+  if(show.length) box.appendChild(ul);
+  renderBilan();
+}
 function hoursOf(sid,n){return sid.endsWith("_n")?(DEP(sid,n)+24-ARR(sid,n)):6}
 function bilanData(){
   const mk=mkey(cur), today=new Date(); today.setHours(0,0,0,0);
@@ -623,6 +771,7 @@ admForm.addEventListener("submit",e=>{
 syncAdm();
 render();
 subscribe();
+setInterval(render,10*60*1000);   // les alertes suivent l'heure qui passe
 </script>
 </body>
 </html>
